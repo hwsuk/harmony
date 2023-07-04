@@ -1,3 +1,4 @@
+import asyncio
 import re
 import json
 import random
@@ -84,16 +85,12 @@ class EnterRedditUsernameModal(discord.ui.Modal, title='Verify your Reddit accou
 
         pending_verification_data.save()
 
-        logger.info(f"User ID {interaction.user.id} verification code is {verification_code}")
-
         embed = discord.Embed(
             title='Check your Reddit private messages',
             description=f'''We've sent a message containing a verification code to your Reddit account - 
             run `/verify` again and enter the code to finish verifying your account.
             
             If you don't see anything from us, please check your Reddit privacy settings.
-            
-            (psst: your code for testing purposes is `{verification_code}` - nothing has been sent to your Reddit account yet)
             '''
         )
 
@@ -122,13 +119,24 @@ class EnterVerificationTokenModal(discord.ui.Modal, title='Enter your verificati
         verified_user_data.save()
         pending_verification.delete()
 
-    async def complete_verification(self, interaction: discord.Interaction):
+    @staticmethod
+    async def assign_role(member: discord.Member) -> None:
+        """
+        Assign the configured role to the specified member.
+        :param member: The member to whom the role should be assigned.
+        :return: Nothing.
+        """
+        role = discord.Object(config["discord"]["verified_role_id"])
+        await member.add_roles(role, reason="Verified using Harmony Bot")
+
+    async def complete_verification(self, interaction: discord.Interaction) -> None:
         entered_code = self.verification_token_field.value
 
         pending_verification = harmony_db.get_pending_verification(interaction.user.id)
 
         if pending_verification.pending_verification_data.verification_code == entered_code:
             self.update_db(pending_verification)
+            await self.assign_role(interaction.user)
 
             await interaction.response.send_message("Done! You've successfully linked your Reddit account.",
                                                     ephemeral=True)
@@ -138,6 +146,29 @@ class EnterVerificationTokenModal(discord.ui.Modal, title='Enter your verificati
 
     async def on_submit(self, interaction: discord.Interaction) -> None:
         await self.complete_verification(interaction)
+
+
+class UnverifyConfirmationModal(discord.ui.Modal, title="Enter your Reddit username to confirm."):
+    reddit_username_field = RedditUsernameField()
+
+    async def unverify(self, interaction: discord.Interaction):
+        verification_data = harmony_db.get_verification_data(interaction.user.id)
+        reddit_username = self.reddit_username_field.value
+
+        reddit_username = reddit_username.replace('u/', '')
+
+        if reddit_username == verification_data.reddit_user.reddit_username:
+            role = discord.Object(config["discord"]["verified_role_id"])
+
+            verification_data.delete()
+            await interaction.user.remove_roles(role, reason="Unverified using Harmony Bot")
+            await interaction.response.send_message("Unverified successfully.", ephemeral=True)
+        else:
+            await interaction.response.send_message(
+                "Looks like you didn't enter the correct Reddit username. Please check and try again.", ephemeral=True)
+
+    async def on_submit(self, interaction: discord.Interaction) -> None:
+        await self.unverify(interaction)
 
 
 class Verify(commands.Cog):
@@ -152,6 +183,8 @@ class Verify(commands.Cog):
 
         self.bot.tree.add_command(whois_context_menu)
 
+        logger.info("Loaded verify cog.")
+
     @app_commands.command(
         name='verify',
         description='Link your Reddit and Discord accounts to gain access to member-only benefits.'
@@ -164,10 +197,29 @@ class Verify(commands.Cog):
         :param interaction: The interaction context for this command.
         :return: Nothing.
         """
+        if harmony_db.has_verification_data(interaction.user.id):
+            await interaction.response.send_message(
+                "Looks like you're already verified. If you can't access the server, **please raise a ticket.**",
+                ephemeral=True)
+
+            return
+
         if harmony_db.has_pending_verification(interaction.user.id):
             await interaction.response.send_modal(EnterVerificationTokenModal())
         else:
             await interaction.response.send_modal(EnterRedditUsernameModal())
+
+    @app_commands.command(
+        name='unverify',
+        description='Unlink your Discord and Reddit accounts.'
+    )
+    @app_commands.guild_only
+    @app_commands.guilds(discord.Object(int(config["discord"]["guild_id"])))
+    async def display_unverify_dialog(self, interaction: discord.Interaction):
+        if harmony_db.has_verification_data(interaction.user.id):
+            await interaction.response.send_modal(UnverifyConfirmationModal())
+        else:
+            await interaction.response.send_message("Doesn't look like you're verified.", ephemeral=True)
 
     async def whois_user(self, interaction: discord.Interaction, member: discord.Member):
         verification_data = harmony_db.get_verification_data(member.id)

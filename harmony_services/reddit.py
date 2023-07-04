@@ -4,6 +4,8 @@ import typing
 import praw.models
 import prawcore.exceptions
 
+from loguru import logger
+
 with open('./config.json', 'r') as config_file:
     config = json.load(config_file)
 
@@ -15,6 +17,41 @@ reddit = praw.Reddit(
     user_agent=config['reddit']['user_agent'],
     check_for_async=False
 )
+
+verification_message_template = None
+
+
+def load_verification_message_template() -> None:
+    """
+    Load the verification message template as markdown, and verify that it has the correct template variables.
+    :return: Nothing.
+    """
+    global verification_message_template
+
+    if verification_message_template is not None:
+        return
+
+    logger.info("Loading verification message template.")
+
+    with open("verification_template.md", "r") as f:
+        verification_message_template = f.read()
+
+    if "$_username" not in verification_message_template or "$_verification_code" not in verification_message_template:
+        verification_message_template = None
+        raise RuntimeError("Verification message template does not contain the correct substitution variables.")
+
+
+def create_verification_message(username: str, verification_code: str) -> str:
+    """
+    Use the previously loaded verification template to generate a verification message.
+    :param username: The username to include in the message.
+    :param verification_code: The verification code to include in the message.
+    :return: The completed verification message.
+    """
+    global verification_message_template
+
+    message = str(verification_message_template)
+    return message.replace("$_username", username).replace("$_verification_code", verification_code)
 
 
 def reddit_user_exists(username: str) -> bool:
@@ -56,23 +93,9 @@ def send_verification_message(username: str, verification_code: str) -> None:
 
     redditor = get_redditor(username)
 
-    message_contents = f"""Hey u/{username},
-
-You recently requested to verify your account on the HardwareSwapUK Discord server.
-
-To complete verification, run the `/verify` command again, and enter the following verification code:
-
-`{verification_code}`
-
-If this wasn't you, please send a modmail to /r/HardwareSwapUK.
-
-Thanks,
-
-The /r/HardwareSwapUK mod team
-
----
-
-This message was sent by the Harmony Discord bot, created by the team at /r/HardwareSwapUK. To learn more about what data this bot collects about you, please [click here](https://privacy.hardwareswap.uk).
-"""
+    message_contents = create_verification_message(username, verification_code)
 
     redditor.message(subject="Your /r/HardwareSwapUK Discord verification code", message=message_contents)
+
+
+load_verification_message_template()

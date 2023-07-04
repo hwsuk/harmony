@@ -44,3 +44,12 @@ def get_verification_data(discord_user_id: int) -> typing.Optional[verify_models
     :return: The verification data, if found, otherwise None.
     """
     return verify_models.VerifiedUser.objects(discord_user__discord_user_id=discord_user_id).first()
+
+
+def has_verification_data(discord_user_id: int) -> bool:
+    """
+    Check if a Discord user has verification data.
+    :param discord_user_id: The user ID to check.
+    :return: True if the user has verification data, otherwise False.
+    """
+    return get_verification_data(discord_user_id) is not None
