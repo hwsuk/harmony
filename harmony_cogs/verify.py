@@ -1,20 +1,22 @@
-import asyncio
-import re
 import json
 import random
+import re
 import string
 import discord
+import mongoengine.errors
 
-from loguru import logger
 from discord import app_commands
 from discord.ext import commands
+from loguru import logger
 
+from harmony_models import verify as verify_models
 from harmony_services import db as harmony_db
 from harmony_services import reddit as harmony_reddit
-from harmony_models import verify as verify_models
 
 with open("config.json", "r") as f:
     config = json.load(f)
+
+verified_role = discord.Object(config["discord"]["verified_role_id"])
 
 
 class RedditUsernameField(discord.ui.TextInput):
@@ -126,8 +128,7 @@ class EnterVerificationTokenModal(discord.ui.Modal, title='Enter your verificati
         :param member: The member to whom the role should be assigned.
         :return: Nothing.
         """
-        role = discord.Object(config["discord"]["verified_role_id"])
-        await member.add_roles(role, reason="Verified using Harmony Bot")
+        await member.add_roles(verified_role, reason="Verified using Harmony Bot")
 
     async def complete_verification(self, interaction: discord.Interaction) -> None:
         entered_code = self.verification_token_field.value
@@ -135,7 +136,12 @@ class EnterVerificationTokenModal(discord.ui.Modal, title='Enter your verificati
         pending_verification = harmony_db.get_pending_verification(interaction.user.id)
 
         if pending_verification.pending_verification_data.verification_code == entered_code:
-            self.update_db(pending_verification)
+            try:
+                self.update_db(pending_verification)
+            except mongoengine.errors.OperationError:
+                await interaction.response.send_message(
+                    "Something went wrong on our end while processing your verification.", ephemeral=True)
+
             await self.assign_role(interaction.user)
 
             await interaction.response.send_message("Done! You've successfully linked your Reddit account.",
@@ -158,10 +164,13 @@ class UnverifyConfirmationModal(discord.ui.Modal, title="Enter your Reddit usern
         reddit_username = reddit_username.replace('u/', '')
 
         if reddit_username == verification_data.reddit_user.reddit_username:
-            role = discord.Object(config["discord"]["verified_role_id"])
+            try:
+                verification_data.delete()
+            except mongoengine.errors.OperationError:
+                await interaction.response.send_message(
+                    "Something went wrong on our end while processing your verification.", ephemeral=True)
 
-            verification_data.delete()
-            await interaction.user.remove_roles(role, reason="Unverified using Harmony Bot")
+            await interaction.user.remove_roles(verified_role, reason="Unverified using Harmony Bot")
             await interaction.response.send_message("Unverified successfully.", ephemeral=True)
         else:
             await interaction.response.send_message(
