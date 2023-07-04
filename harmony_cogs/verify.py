@@ -1,4 +1,5 @@
 import re
+import json
 import random
 import string
 import discord
@@ -36,9 +37,10 @@ class VerificationTokenField(discord.ui.TextInput):
 class EnterRedditUsernameModal(discord.ui.Modal, title='Verify your Reddit account'):
     reddit_username_field = RedditUsernameField()
 
-    def generate_verification_code(self, prefix: str = "") -> str:
+    @staticmethod
+    def generate_verification_code(prefix: str = "") -> str:
         chars = string.digits + string.ascii_letters
-        code = ''.join(random.choice(chars) for i in range(12))
+        code = ''.join(random.choice(chars) for _ in range(12))
 
         return f"{prefix}{code}"
 
@@ -86,13 +88,16 @@ class EnterRedditUsernameModal(discord.ui.Modal, title='Verify your Reddit accou
 
         embed = discord.Embed(
             title='Check your Reddit private messages',
-            description=f'''We've sent a message containing a verification code to your Reddit account - run `/verify` again and enter the code to finish verifying your account.
+            description=f'''We've sent a message containing a verification code to your Reddit account - 
+            run `/verify` again and enter the code to finish verifying your account.
             
             If you don't see anything from us, please check your Reddit privacy settings.
             
             (psst: your code for testing purposes is `{verification_code}` - nothing has been sent to your Reddit account yet)
             '''
         )
+
+        harmony_reddit.send_verification_message(username, verification_code)
 
         # Send the user a private message.
         await interaction.response.send_message(embed=embed, ephemeral=True)
@@ -104,7 +109,8 @@ class EnterRedditUsernameModal(discord.ui.Modal, title='Verify your Reddit accou
 class EnterVerificationTokenModal(discord.ui.Modal, title='Enter your verification code'):
     verification_token_field = VerificationTokenField()
 
-    def update_db(self, pending_verification: verify_models.PendingVerification):
+    @staticmethod
+    def update_db(pending_verification: verify_models.PendingVerification):
         verified_user_data = verify_models.VerifiedUser(
             discord_user=pending_verification.discord_user,
             reddit_user=pending_verification.reddit_user,
@@ -123,6 +129,7 @@ class EnterVerificationTokenModal(discord.ui.Modal, title='Enter your verificati
 
         if pending_verification.pending_verification_data.verification_code == entered_code:
             self.update_db(pending_verification)
+
             await interaction.response.send_message("Done! You've successfully linked your Reddit account.",
                                                     ephemeral=True)
         else:
@@ -137,26 +144,50 @@ class Verify(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
 
+        whois_context_menu = app_commands.ContextMenu(
+            name="Whois",
+            guild_ids=[int(config["discord"]["guild_id"])],
+            callback=self.whois_user
+        )
+
+        self.bot.tree.add_command(whois_context_menu)
+
     @app_commands.command(
         name='verify',
         description='Link your Reddit and Discord accounts to gain access to member-only benefits.'
     )
     @app_commands.guild_only
     @app_commands.guilds(discord.Object(int(config["discord"]["guild_id"])))
-    async def display_modal_dialog(self, interaction: discord.Interaction) -> None:
+    async def display_verification_dialog(self, interaction: discord.Interaction) -> None:
+        """
+        Command to display the verification model, to allow users to verify their Reddit accounts.
+        :param interaction: The interaction context for this command.
+        :return: Nothing.
+        """
         if harmony_db.has_pending_verification(interaction.user.id):
             await interaction.response.send_modal(EnterVerificationTokenModal())
         else:
             await interaction.response.send_modal(EnterRedditUsernameModal())
 
-    @app_commands.context_menu(
-        name="Whois"
-    )
-    @app_commands.guild_only
-    @app_commands.guilds(discord.Object(int(config["discord"]["guild_id"])))
     async def whois_user(self, interaction: discord.Interaction, member: discord.Member):
         verification_data = harmony_db.get_verification_data(member.id)
 
+        embed = discord.Embed(
+            title=f"Whois information for {member.display_name}"
+        )
+
+        embed.set_thumbnail(url=member.display_avatar.url)
+
+        embed.add_field(name="Verified Reddit account", value="Yes" if verification_data else "No")
+
+        if verification_data:
+            embed.add_field(name="Reddit username", value=verification_data.reddit_user.reddit_username,
+                            inline=False)
+
+            embed.add_field(name="Verified since", value=verification_data.user_verification_data.verified_at,
+                            inline=False)
+
+        await interaction.response.send_message(embed=embed, ephemeral=True)
 
 
 async def setup(bot: commands.Bot) -> None:

@@ -24,14 +24,14 @@ class PendingVerificationData(mongoengine.EmbeddedDocument):
 
 
 class PendingVerification(mongoengine.Document):
-    discord_user = mongoengine.EmbeddedDocumentField(DiscordUser, required=True)
-    reddit_user = mongoengine.EmbeddedDocumentField(RedditUser, required=True)
-    pending_verification_data = mongoengine.EmbeddedDocumentField(PendingVerificationData, required=True)
+    discord_user: DiscordUser = mongoengine.EmbeddedDocumentField(DiscordUser, required=True)
+    reddit_user: RedditUser = mongoengine.EmbeddedDocumentField(RedditUser, required=True)
+    pending_verification_data: PendingVerificationData = mongoengine.EmbeddedDocumentField(PendingVerificationData, required=True)
     meta = {'collection': 'pending_verifications'}
 
 
 class VerifiedUser(mongoengine.Document):
-    discord_user = mongoengine.EmbeddedDocumentField(DiscordUser, required=True)
-    reddit_user = mongoengine.EmbeddedDocumentField(RedditUser, required=True)
-    user_verification_data = mongoengine.EmbeddedDocumentField(UserVerificationData, required=True)
+    discord_user: DiscordUser = mongoengine.EmbeddedDocumentField(DiscordUser, required=True)
+    reddit_user: RedditUser = mongoengine.EmbeddedDocumentField(RedditUser, required=True)
+    user_verification_data: UserVerificationData = mongoengine.EmbeddedDocumentField(UserVerificationData, required=True)
     meta = {'collection': 'verified_users'}
