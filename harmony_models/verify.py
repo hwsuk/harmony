@@ -34,4 +34,5 @@ class VerifiedUser(mongoengine.Document):
     discord_user: DiscordUser = mongoengine.EmbeddedDocumentField(DiscordUser, required=True)
     reddit_user: RedditUser = mongoengine.EmbeddedDocumentField(RedditUser, required=True)
     user_verification_data: UserVerificationData = mongoengine.EmbeddedDocumentField(UserVerificationData, required=True)
+    is_legacy_migration = mongoengine.BooleanField(default=False)
     meta = {'collection': 'verified_users'}

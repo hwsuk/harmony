@@ -2,8 +2,9 @@ import json
 import random
 import re
 import string
+import traceback
+
 import discord
-import mongoengine.errors
 
 from discord import app_commands
 from discord.ext import commands
@@ -98,11 +99,14 @@ class EnterRedditUsernameModal(discord.ui.Modal, title='Verify your Reddit accou
 
         harmony_reddit.send_verification_message(username, verification_code)
 
-        # Send the user a private message.
+        # Send the user instructions on how to proceed.
         await interaction.response.send_message(embed=embed, ephemeral=True)
 
     async def on_submit(self, interaction: discord.Interaction) -> None:
         await self.send_verification_code(interaction)
+
+    async def on_error(self, interaction: discord.Interaction, error: Exception) -> None:
+        await handle_error(interaction, error)
 
 
 class EnterVerificationTokenModal(discord.ui.Modal, title='Enter your verification code'):
@@ -136,12 +140,7 @@ class EnterVerificationTokenModal(discord.ui.Modal, title='Enter your verificati
         pending_verification = harmony_db.get_pending_verification(interaction.user.id)
 
         if pending_verification.pending_verification_data.verification_code == entered_code:
-            try:
-                self.update_db(pending_verification)
-            except mongoengine.errors.OperationError:
-                await interaction.response.send_message(
-                    "Something went wrong on our end while processing your verification.", ephemeral=True)
-
+            self.update_db(pending_verification)
             await self.assign_role(interaction.user)
 
             await interaction.response.send_message("Done! You've successfully linked your Reddit account.",
@@ -152,6 +151,9 @@ class EnterVerificationTokenModal(discord.ui.Modal, title='Enter your verificati
 
     async def on_submit(self, interaction: discord.Interaction) -> None:
         await self.complete_verification(interaction)
+
+    async def on_error(self, interaction: discord.Interaction, error: Exception) -> None:
+        await handle_error(interaction, error)
 
 
 class UnverifyConfirmationModal(discord.ui.Modal, title="Enter your Reddit username to confirm."):
@@ -164,11 +166,7 @@ class UnverifyConfirmationModal(discord.ui.Modal, title="Enter your Reddit usern
         reddit_username = reddit_username.replace('u/', '')
 
         if reddit_username == verification_data.reddit_user.reddit_username:
-            try:
-                verification_data.delete()
-            except mongoengine.errors.OperationError:
-                await interaction.response.send_message(
-                    "Something went wrong on our end while processing your verification.", ephemeral=True)
+            verification_data.delete()
 
             await interaction.user.remove_roles(verified_role, reason="Unverified using Harmony Bot")
             await interaction.response.send_message("Unverified successfully.", ephemeral=True)
@@ -178,6 +176,9 @@ class UnverifyConfirmationModal(discord.ui.Modal, title="Enter your Reddit usern
 
     async def on_submit(self, interaction: discord.Interaction) -> None:
         await self.unverify(interaction)
+
+    async def on_error(self, interaction: discord.Interaction, error: Exception) -> None:
+        await handle_error(interaction, error)
 
 
 class Verify(commands.Cog):
@@ -249,6 +250,31 @@ class Verify(commands.Cog):
                             inline=False)
 
         await interaction.response.send_message(embed=embed, ephemeral=True)
+
+
+async def handle_error(interaction: discord.Interaction, error: Exception) -> None:
+    """
+    Handle an exception encountered during an interaction.
+    :param interaction: The interaction in which the exception was raised.
+    :param error: The raised exception.
+    :return: Nothing.
+    """
+    error_reference = "err_".join(random.choice(string.ascii_letters + string.digits) for _ in range(12))
+
+    logger.warning(f"{error_reference}: An error was raised during interaction with command {interaction.command.name}")
+    traceback.print_exception(type(error), error, error.__traceback__)
+
+    embed = discord.Embed(
+        title="An error occurred",
+        description=f"""
+        Something went wrong while processing your request.
+          
+        Please try again later. If the problem persists, please raise a ticket, citing the following reference:
+        `{error_reference}`
+        """
+    )
+
+    await interaction.response.send_message(embed=embed, ephemeral=True)
 
 
 async def setup(bot: commands.Bot) -> None:
