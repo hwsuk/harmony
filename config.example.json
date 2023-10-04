@@ -1,6 +1,23 @@
 {
   "discord": {
     "bot_token": "",
-    "guild_id": 0
+    "guild_id": 0,
+    "harmony_management_role_id": 0,
+    "verified_role_id": 0
+  },
+  "reddit": {
+    "client_id": "",
+    "client_secret": "",
+    "username": "",
+    "password": "",
+    "user_agent": ""
+  },
+  "db": {
+    "username": "",
+    "password": "",
+    "hostname": "",
+    "port": 27017,
+    "db_name": "",
+    "replica_set_name": ""
   }
 }
