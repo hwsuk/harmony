@@ -1,0 +1,19 @@
+version: "3.9"
+
+services:
+  discord-bot:
+    image: "emberdex/hwsuk-harmony:latest"
+    container_name: "harmony-bot"
+    volumes:
+      - type: bind
+        source: ./config.json
+        target: /botapp/config.json
+
+  mongodb:
+    image: "mongo:7.0.2"
+    container_name: "harmony-db"
+    ports:
+      - "127.0.0.1:27020:27017"
+    env_file:
+      - .env.mongodb
+
