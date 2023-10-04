@@ -10,6 +10,6 @@ ADD requirements.txt /botapp
 ADD verification_template.md /botapp
 
 RUN pip install -r /botapp/requirements.txt
-RUN ls -laR /botapp
 
-CMD ["python3", "/botapp/main.py"]
+WORKDIR /botapp
+CMD ["python3", "main.py"]
