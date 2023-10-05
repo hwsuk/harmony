@@ -161,6 +161,7 @@ class UnverifyConfirmationModal(discord.ui.Modal, title="Enter your Reddit usern
 
     async def unverify(self, interaction: discord.Interaction):
         verification_data = harmony_db.get_verification_data(interaction.user.id)
+
         reddit_username = self.reddit_username_field.value
 
         reddit_username = reddit_username.replace('u/', '')
@@ -228,6 +229,11 @@ class Verify(commands.Cog):
     async def display_unverify_dialog(self, interaction: discord.Interaction):
         if harmony_db.has_verification_data(interaction.user.id):
             await interaction.response.send_modal(UnverifyConfirmationModal())
+        elif harmony_db.has_pending_verification(interaction.user.id):
+            pending_verification = harmony_db.get_pending_verification(interaction.user.id)
+            pending_verification.delete()
+            await interaction.response.send_message(
+                "Your pending verification has been cancelled. You can `/verify` again at any time.", ephemeral=True)
         else:
             await interaction.response.send_message("Doesn't look like you're verified.", ephemeral=True)
 

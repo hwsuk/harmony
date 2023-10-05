@@ -8,12 +8,23 @@ services:
       - type: bind
         source: ./config.json
         target: /botapp/config.json
+    networks:
+      - harmony
 
   mongodb:
     image: "mongo:7.0.2"
+    command: --replSet rs01 --bind_ip localhost,harmony-db
     container_name: "harmony-db"
     ports:
       - "127.0.0.1:27020:27017"
     env_file:
       - .env.mongodb
+    networks:
+      - harmony
+    volumes:
+      - type: bind
+        source: ./db
+        target: /data/db
 
+networks:
+  harmony:
