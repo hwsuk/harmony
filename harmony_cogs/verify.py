@@ -342,7 +342,19 @@ class Verify(commands.Cog):
 
     @app_commands.checks.has_role(config["discord"]["harmony_management_role_id"])
     async def update_role(self, interaction: discord.Interaction, member: discord.Member):
-        await interaction.response.send_message("Please select the new role:", view=UpdateRoleView(target_member=member), ephemeral=True)
+        verification_data = harmony_db.get_verification_data(member.id)
+
+        if not verification_data:
+            await interaction.response.send_message(
+                f"**{member.name}** hasn't verified themselves, so their flair can't be updated. "
+                "(I don't know their Reddit username 🙃)", ephemeral=True
+            )
+        else:
+            await interaction.response.send_message(
+                "## Please select the new role:",
+                view=UpdateRoleView(target_member=member),
+                ephemeral=True
+            )
 
 
 async def handle_error(interaction: discord.Interaction, error: Exception) -> None:
