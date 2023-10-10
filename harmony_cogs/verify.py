@@ -85,6 +85,8 @@ class UpdateRoleSelect(discord.ui.Select):
         verification_data.save()
 
         new_response += f"\n- Updated verification data for u/**{verification_data.reddit_user.reddit_username}**."
+        new_response += ("\n\n**All done!** Please check the subreddit if you want to verify the new flair "
+                         "has been applied correctly.")
         await interaction.edit_original_response(content=new_response)
 
 class RedditUsernameField(discord.ui.TextInput):
