@@ -340,6 +340,7 @@ class Verify(commands.Cog):
 
         await interaction.response.send_message(embed=embed, ephemeral=True)
 
+    @app_commands.checks.has_role(config["discord"]["harmony_management_role_id"])
     async def update_role(self, interaction: discord.Interaction, member: discord.Member):
         await interaction.response.send_message("Please select the new role:", view=UpdateRoleView(target_member=member), ephemeral=True)
 
