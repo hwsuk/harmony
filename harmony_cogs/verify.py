@@ -3,11 +3,15 @@ import random
 import re
 import string
 import traceback
+import typing
+from typing import Any
 
 import discord
 
-from discord import app_commands
+from discord import app_commands, Interaction
+from discord._types import ClientT
 from discord.ext import commands
+from discord.ui import Item
 from loguru import logger
 
 from harmony_models import verify as verify_models
@@ -17,8 +21,73 @@ from harmony_services import reddit as harmony_reddit
 with open("config.json", "r") as f:
     config = json.load(f)
 
+configured_verify_role_data = config["roles"]
 verified_role = discord.Object(config["discord"]["verified_role_id"])
+user_management_role = discord.Object(config["discord"]["harmony_management_role_id"])
 
+
+class UpdateRoleSelect(discord.ui.Select):
+    update_role_options: typing.List[discord.components.SelectOption] = []
+    for role in configured_verify_role_data:
+        update_role_options.append(discord.components.SelectOption(
+            label=role["role_name"],
+            value=role["discord_role_id"]
+        ))
+
+    def __init__(self, target_member: discord.Member):
+        self.target_member = target_member
+        super().__init__(
+            options=self.update_role_options
+        )
+
+    async def callback(self, interaction: Interaction[ClientT]) -> Any:
+        new_discord_role_id = int(self.values[0])
+        logger.info(f"Reddit role update invoked for user {self.target_member.name} ({self.target_member.id}) "
+                    f"by moderator {interaction.user.name}, new Discord role ID: {new_discord_role_id}")
+
+        new_response = "The following operations were completed successfully:\n\n"
+
+        # Cleanup any existing roles
+        configured_member_role_ids = [role.id for role in self.target_member.roles]
+        for role in configured_verify_role_data:
+            if role["discord_role_id"] in configured_member_role_ids:
+                await self.target_member.remove_roles(
+                    discord.Object(role["discord_role_id"]),
+                    reason="Removed by Harmony bot during Reddit flair update"
+                )
+
+        verify_role = [role for role in configured_verify_role_data if role["discord_role_id"] == new_discord_role_id][0]
+
+        # Give the user their new trade role.
+        new_role = discord.Object(new_discord_role_id)
+        await self.target_member.add_roles(
+            new_role,
+            reason="Added by Harmony bot during Reddit flair update"
+        )
+
+        new_response += f"- Granted the **{verify_role['role_name']}** Discord role to **{self.target_member.name}**."
+        await interaction.response.send_message(new_response, ephemeral=True)
+
+        verification_data = harmony_db.get_verification_data(self.target_member.id)
+
+        # Give the user their new Reddit flair.
+        harmony_reddit.update_user_flair(
+            verification_data.reddit_user.reddit_username,
+            verify_role["reddit_flair_text"],
+            verify_role["reddit_flair_css_class"]
+        )
+
+        new_response += f"\n- Updated subreddit flair for u/**{verification_data.reddit_user.reddit_username}**."
+        await interaction.edit_original_response(content=new_response)
+
+        # Update our role ID bookkeeping.
+        verification_data.discord_user.guild_roles = [role.id for role in self.target_member.roles]
+        verification_data.save()
+
+        new_response += f"\n- Updated verification data for u/**{verification_data.reddit_user.reddit_username}**."
+        new_response += ("\n\n**All done!** Please check the subreddit if you want to verify the new flair "
+                         "has been applied correctly.")
+        await interaction.edit_original_response(content=new_response)
 
 class RedditUsernameField(discord.ui.TextInput):
     def __init__(self):
@@ -182,6 +251,15 @@ class UnverifyConfirmationModal(discord.ui.Modal, title="Enter your Reddit usern
         await handle_error(interaction, error)
 
 
+class UpdateRoleView(discord.ui.View):
+    def __init__(self, target_member: discord.Member):
+        super().__init__()
+        self.add_item(UpdateRoleSelect(target_member))
+
+    async def on_error(self, interaction: Interaction, error: Exception, item: Item[Any], /) -> None:
+        await handle_error(interaction, error)
+
+
 class Verify(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
@@ -192,9 +270,14 @@ class Verify(commands.Cog):
             callback=self.whois_user
         )
 
-        self.bot.tree.add_command(whois_context_menu)
+        update_role_context_menu = app_commands.ContextMenu(
+            name="Update Role",
+            guild_ids=[int(config["discord"]["guild_id"])],
+            callback=self.update_role
+        )
 
-        logger.info("Loaded verify cog.")
+        self.bot.tree.add_command(whois_context_menu)
+        self.bot.tree.add_command(update_role_context_menu)
 
     @app_commands.command(
         name='verify',
@@ -257,6 +340,9 @@ class Verify(commands.Cog):
 
         await interaction.response.send_message(embed=embed, ephemeral=True)
 
+    async def update_role(self, interaction: discord.Interaction, member: discord.Member):
+        await interaction.response.send_message("Please select the new role:", view=UpdateRoleView(target_member=member), ephemeral=True)
+
 
 async def handle_error(interaction: discord.Interaction, error: Exception) -> None:
     """
@@ -265,9 +351,14 @@ async def handle_error(interaction: discord.Interaction, error: Exception) -> No
     :param error: The raised exception.
     :return: Nothing.
     """
-    error_reference = "err_".join(random.choice(string.ascii_letters + string.digits) for _ in range(12))
+    error_reference = "err_" + "".join(random.choice(string.ascii_letters + string.digits) for _ in range(12))
 
-    logger.warning(f"{error_reference}: An error was raised during interaction with command {interaction.command.name}")
+    if interaction.command:
+        logger.warning(f"{error_reference}: "
+                       f"An error was raised during interaction with command {interaction.command.name}")
+    else:
+        logger.warning(f"{error_reference}: An error was raised during interaction with a command.")
+
     traceback.print_exception(type(error), error, error.__traceback__)
 
     embed = discord.Embed(
