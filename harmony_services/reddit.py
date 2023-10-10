@@ -80,6 +80,18 @@ def get_redditor(username: str) -> typing.Optional[praw.models.Redditor]:
         return None
 
 
+def get_subreddit(subreddit: str) -> typing.Optional[praw.models.Subreddit]:
+    """
+    Get a specified subreddit.
+    :param subreddit: The subreddit's name, not beginning with r/.
+    :return: The subreddit, if it exists, otherwise None.
+    """
+    try:
+        return reddit.subreddit(subreddit)
+    except prawcore.exceptions.NotFound:
+        return None
+
+
 def send_verification_message(username: str, verification_code: str) -> None:
     """
     Send a message to the user with their verification code in it.
@@ -96,6 +108,22 @@ def send_verification_message(username: str, verification_code: str) -> None:
     message_contents = create_verification_message(username, verification_code)
 
     redditor.message(subject="Your /r/HardwareSwapUK Discord verification code", message=message_contents)
+
+
+def update_user_flair(username: str, flair_text: str, css_class_name: str) -> None:
+    """
+    Update a user's flair.
+    :param username: The username of the user whose flair should be updated.
+    :param flair_text: The new flair text.
+    :param css_class_name: The CSS class name to apply to the new flair.
+    :return: Nothing.
+    """
+
+    if not reddit_user_exists(username):
+        raise RuntimeError("The specified Reddit user doesn't exist.")
+
+    subreddit = get_subreddit(config["reddit"]["subreddit_name"])
+    subreddit.flair.set(username, flair_text, css_class=css_class_name)
 
 
 load_verification_message_template()

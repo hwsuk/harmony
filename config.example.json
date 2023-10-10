@@ -10,7 +10,8 @@
     "client_secret": "",
     "username": "",
     "password": "",
-    "user_agent": ""
+    "user_agent": "",
+    "subreddit_name": ""
   },
   "db": {
     "username": "",
@@ -19,5 +20,13 @@
     "port": 27017,
     "db_name": "",
     "replica_set_name": ""
-  }
+  },
+  "roles": [
+    {
+      "role_name": "Example Trade Role",
+      "discord_role_id": 0,
+      "reddit_flair_text": "Hello, World!",
+      "reddit_flair_css_class": "hello_world"
+    }
+  ]
 }
