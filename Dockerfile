@@ -5,6 +5,7 @@ COPY harmony_config /botapp/harmony_config
 COPY harmony_models /botapp/harmony_models
 COPY harmony_services /botapp/harmony_services
 COPY harmony_ui /botapp/harmony_ui
+COPY harmony_scheduled /botapp/harmony_scheduled
 
 ADD main.py /botapp
 ADD requirements.txt /botapp

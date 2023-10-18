@@ -102,9 +102,9 @@ class Verify(commands.Cog):
             elif query.isnumeric():
                 logger.info(f"/whois: {interaction.user.name} looked up user by Discord user ID {query}")
                 result = harmony_db.get_verification_data(discord_user_id=int(query))
-            # else:
-            #     logger.info(f"/whois: {interaction.user.name} looked up user by Discord username {query}")
-            #     guild_member = interaction.guild.get_member_named(query)
+            else:
+                logger.info(f"/whois: {interaction.user.name} looked up user by Discord username {query}")
+                guild_member = discord.utils.get(interaction.guild.members, name=query)
 
             if not result and not guild_member:
                 await interaction.response.send_message(
