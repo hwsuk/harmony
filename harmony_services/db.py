@@ -48,7 +48,7 @@ def get_verification_data(discord_user_id: int = None,
     if discord_user_id:
         return verify_models.VerifiedUser.objects(discord_user__discord_user_id=discord_user_id).first()
     if reddit_username:
-        return verify_models.VerifiedUser.objects(reddit_user__reddit_username=reddit_username).first()
+        return verify_models.VerifiedUser.objects(reddit_user__reddit_username__iexact=reddit_username).first()
 
     return None
 
