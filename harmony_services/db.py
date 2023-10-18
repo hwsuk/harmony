@@ -37,13 +37,20 @@ def has_pending_verification(discord_user_id: int) -> bool:
     return get_pending_verification(discord_user_id) is not None
 
 
-def get_verification_data(discord_user_id: int) -> typing.Optional[verify_models.VerifiedUser]:
+def get_verification_data(discord_user_id: int = None,
+                          reddit_username: str = None) -> typing.Optional[verify_models.VerifiedUser]:
     """
     Fetch a Discord user's verification data from the database.
-    :param discord_user_id: The Discord user to fetch the pending verification for.
+    :param discord_user_id: The Discord user ID to fetch the verification for.
+    :param reddit_username: The Reddit username to fetch the verification for.
     :return: The verification data, if found, otherwise None.
     """
-    return verify_models.VerifiedUser.objects(discord_user__discord_user_id=discord_user_id).first()
+    if discord_user_id:
+        return verify_models.VerifiedUser.objects(discord_user__discord_user_id=discord_user_id).first()
+    if reddit_username:
+        return verify_models.VerifiedUser.objects(reddit_user__reddit_username=reddit_username).first()
+
+    return None
 
 
 def has_verification_data(discord_user_id: int) -> bool:
@@ -52,4 +59,4 @@ def has_verification_data(discord_user_id: int) -> bool:
     :param discord_user_id: The user ID to check.
     :return: True if the user has verification data, otherwise False.
     """
-    return get_verification_data(discord_user_id) is not None
+    return get_verification_data(discord_user_id=discord_user_id) is not None
