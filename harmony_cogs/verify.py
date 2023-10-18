@@ -1,6 +1,7 @@
 import json
 import discord
 import harmony_ui
+import harmony_ui.verify
 
 from discord import app_commands
 from discord.ext import commands
@@ -101,9 +102,9 @@ class Verify(commands.Cog):
             elif query.isnumeric():
                 logger.info(f"/whois: {interaction.user.name} looked up user by Discord user ID {query}")
                 result = harmony_db.get_verification_data(discord_user_id=int(query))
-            else:
-                logger.info(f"/whois: {interaction.user.name} looked up user by Discord username {query}")
-                guild_member = interaction.guild.get_member_named(query)
+            # else:
+            #     logger.info(f"/whois: {interaction.user.name} looked up user by Discord username {query}")
+            #     guild_member = interaction.guild.get_member_named(query)
 
             if not result and not guild_member:
                 await interaction.response.send_message(
