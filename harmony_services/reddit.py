@@ -74,7 +74,11 @@ def redditor_suspended(username: str) -> bool:
     :param username: The username to check.
     :return: True if the Redditor has been suspended, otherwise False.
     """
-    redditor = reddit.redditor(username)
+    try:
+        redditor = reddit.redditor(username)
+    except prawcore.exceptions.NotFound:
+        return False
+
     return hasattr(redditor, 'is_suspended') and redditor.is_suspended
 
 
