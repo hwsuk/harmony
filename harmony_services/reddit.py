@@ -62,7 +62,7 @@ def reddit_user_exists(username: str) -> bool:
     """
     try:
         reddit.redditor(username).id
-    except prawcore.exceptions.NotFound:
+    except (prawcore.exceptions.NotFound, AttributeError):
         return False
 
     return True
