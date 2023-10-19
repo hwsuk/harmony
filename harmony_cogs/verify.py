@@ -191,7 +191,15 @@ class Verify(commands.Cog):
 
             for user in users:
                 reddit_username = user.reddit_user.reddit_username
-                member = await guild.fetch_member(user.discord_user.discord_user_id)
+                try:
+                    member = await guild.fetch_member(user.discord_user.discord_user_id)
+                except discord.errors.NotFound:
+                    logger.info(f"Redditor u/{reddit_username} is no longer in the Discord server, cleaning up data")
+
+                    if not dry_run:
+                        user.delete()
+
+                    continue
 
                 reddit_user_exists = harmony_reddit.reddit_user_exists(reddit_username)
                 reddit_account_suspended = harmony_reddit.redditor_suspended(reddit_username)
