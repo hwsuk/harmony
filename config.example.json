@@ -28,5 +28,11 @@
       "reddit_flair_text": "Hello, World!",
       "reddit_flair_css_class": "hello_world"
     }
-  ]
+  ],
+  "schedule": {
+    "reddit_account_check_interval_seconds": 86400,
+    "reddit_account_check_reporting_channel_id": 0,
+    "reddit_account_check_dry_run": false,
+    "reddit_account_check_ban_fetch_limit": 10000
+  }
 }

@@ -68,6 +68,25 @@ def reddit_user_exists(username: str) -> bool:
     return True
 
 
+def redditor_suspended(username: str) -> bool:
+    """
+    Check if a Reddit account is suspended.
+    :param username: The username to check.
+    :return: True if the Redditor has been suspended, otherwise False.
+    """
+    return reddit.redditor(username).is_suspended
+
+
+def subreddit_bans(subreddit: str, limit: int = 10000) -> typing.List[praw.models.Redditor]:
+    """
+    Get a list of banned accounts from the subreddit.
+    :param limit: The maximum number of bans to fetch.
+    :param subreddit: The subreddit to check.
+    :return: A list of up to {limit} banned accounts from the specified subreddit.
+    """
+    return get_subreddit(subreddit).banned(limit=limit)
+
+
 def get_redditor(username: str) -> typing.Optional[praw.models.Redditor]:
     """
     Get a specified Redditor.
