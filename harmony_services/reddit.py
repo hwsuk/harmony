@@ -76,10 +76,9 @@ def redditor_suspended(username: str) -> bool:
     """
     try:
         redditor = reddit.redditor(username)
+        return hasattr(redditor, 'is_suspended') and redditor.is_suspended
     except prawcore.exceptions.NotFound:
         return False
-
-    return hasattr(redditor, 'is_suspended') and redditor.is_suspended
 
 
 def subreddit_bans(subreddit: str, limit: int = 10000) -> typing.List[praw.models.Redditor]:
