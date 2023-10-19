@@ -74,7 +74,8 @@ def redditor_suspended(username: str) -> bool:
     :param username: The username to check.
     :return: True if the Redditor has been suspended, otherwise False.
     """
-    return reddit.redditor(username).is_suspended
+    redditor = reddit.redditor(username)
+    return hasattr(redditor, 'is_suspended') and redditor.is_suspended
 
 
 def subreddit_bans(subreddit: str, limit: int = 10000) -> typing.List[praw.models.Redditor]:
