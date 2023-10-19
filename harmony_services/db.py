@@ -53,6 +53,14 @@ def get_verification_data(discord_user_id: int = None,
     return None
 
 
+def get_all_verification_data() -> typing.List[verify_models.VerifiedUser]:
+    """
+    Fetch all verified users.
+    :return: A list of all verified users.
+    """
+    return verify_models.VerifiedUser.objects()
+
+
 def has_verification_data(discord_user_id: int) -> bool:
     """
     Check if a Discord user has verification data.

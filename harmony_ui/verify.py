@@ -262,3 +262,42 @@ class UpdateRoleView(discord.ui.View):
 
     async def on_error(self, interaction: discord.Interaction, error: Exception, item: Item[Any], /) -> None:
         await harmony_ui.handle_error(interaction, error)
+
+
+def create_nonexistent_reddit_account_embed(username: str, guild_name: str) -> discord.Embed:
+    return discord.Embed(
+        title="Your Reddit account doesn't exist",
+        description=f"""
+        It looks like your Reddit account, **u/{username}**, doesn't exist anymore.
+        
+        Access to privileged channels in {guild_name} requires a verified Reddit account, so your access has been removed. Please use `/verify` again with a valid Reddit account to regain access.
+        
+        If you think this is in error, please contact the moderation team.
+        """
+    )
+
+
+def create_suspended_reddit_account_embed(username: str, guild_name: str) -> discord.Embed:
+    return discord.Embed(
+        title="Your Reddit account has been suspended",
+        description=f"""
+        It looks like your Reddit account, **u/{username}**, has been suspended.
+
+        Access to privileged channels in {guild_name} requires a verified Reddit account, so your access has been removed. Please use `/verify` again with a valid Reddit account to regain access.
+
+        If you think this is in error, please contact the moderation team.
+        """
+    )
+
+
+def create_banned_reddit_account_embed(username: str, guild_name: str, subreddit_name: str) -> discord.Embed:
+    return discord.Embed(
+        title=f"Your Reddit account is banned from r/{subreddit_name}",
+        description=f"""
+        It looks like your Reddit account, **u/{username}**, has been banned from participating in r/{subreddit_name}.
+
+        Access to the {guild_name} Discord server requires that your subreddit account is in good standing. As a result, you have been banned from the server.
+
+        If you think this is in error, please contact the moderation team.
+        """
+    )
