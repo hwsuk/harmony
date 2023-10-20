@@ -1,3 +1,4 @@
+import os
 import json
 import typing
 
@@ -23,6 +24,16 @@ class HarmonyBot(commands.Bot):
     async def on_ready(self):
         logger.info(f'Logged in as {self.user} (ID: {self.user.id})')
         logger.info('------')
+
+        app_version = os.getenv("HARMONY_APP_VERSION")
+
+        if app_version:
+            await self.change_presence(
+                activity=discord.Activity(
+                    name=f"Harmony v{app_version}, at your service.",
+                    emoji="🤖"
+                )
+            )
 
         await self.add_cog(Verify(self))
 

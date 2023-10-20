@@ -1,5 +1,7 @@
 FROM python:3.11.6-alpine3.18
 
+ENV HARMONY_APP_VERSION=$GITHUB_REF_NAME
+
 COPY harmony_cogs /botapp/harmony_cogs
 COPY harmony_config /botapp/harmony_config
 COPY harmony_models /botapp/harmony_models
