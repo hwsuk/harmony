@@ -25,6 +25,14 @@ class Ebay(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
+        self.proxy_url = None
+
+        try:
+            self.proxy_url = config["ebay"]["http_proxy_url"]
+        except KeyError:
+            logger.warning("No HTTP proxy is configured for the eBay searches.")
+            pass
+
     @app_commands.command(
         name='ebay',
         description='Search recently-completed eBay listings to get an idea of how to price your items.'
@@ -71,8 +79,7 @@ class Ebay(commands.Cog):
         """
         formatted_url = self.base_url.replace("$_SEARCH_QUERY", self.urlencode_search_query(query))
 
-        # TODO: Configure a proxy for this.
-        async with httpx.AsyncClient() as http_client:
+        async with httpx.AsyncClient(proxies=self.proxy_url) as http_client:
             response = await http_client.get(formatted_url)
             return response.text
 

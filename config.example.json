@@ -39,5 +39,8 @@
     "discord_role_check_interval_seconds": 86400,
     "discord_role_check_reporting_channel_id": 0,
     "discord_role_check_dry_run": false
+  },
+  "ebay": {
+    "http_proxy_url": "https://example:example@localhost:9090"
   }
 }
