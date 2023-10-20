@@ -29,9 +29,8 @@ class HarmonyBot(commands.Bot):
 
         if app_version:
             await self.change_presence(
-                activity=discord.Activity(
+                activity=discord.Game(
                     name=f"Harmony v{app_version}, at your service.",
-                    emoji="🤖"
                 )
             )
 

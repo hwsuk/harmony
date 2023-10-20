@@ -4,6 +4,7 @@ services:
   discord-bot:
     image: "emberdex/hwsuk-harmony:latest"
     container_name: "harmony-bot"
+    restart: on-failure
     volumes:
       - type: bind
         source: ./config.json
@@ -15,6 +16,7 @@ services:
     image: "mongo:7.0.2"
     command: --replSet rs01 --bind_ip localhost,harmony-db
     container_name: "harmony-db"
+    restart: on-failure
     ports:
       - "127.0.0.1:27020:27017"
     env_file:

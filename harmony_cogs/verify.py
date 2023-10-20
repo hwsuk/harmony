@@ -159,6 +159,12 @@ class Verify(commands.Cog):
         Check Reddit accounts to make sure they haven't been banned from the subreddit, or deleted their account.
         :return: Nothing.
         """
+        job_enabled: bool = config["schedule"]["reddit_account_check_enabled"]
+
+        if not job_enabled:
+            logger.info("Scheduled Reddit account check is disabled.")
+            return
+
         reporting_channel = None
         removed_users = []
         dry_run: bool = config["schedule"]["reddit_account_check_dry_run"]

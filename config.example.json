@@ -30,6 +30,7 @@
     }
   ],
   "schedule": {
+    "reddit_account_check_enabled": true,
     "reddit_account_check_interval_seconds": 86400,
     "reddit_account_check_reporting_channel_id": 0,
     "reddit_account_check_dry_run": false,
