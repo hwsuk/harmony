@@ -153,6 +153,16 @@ class Verify(commands.Cog):
         except Exception as e:
             await harmony_ui.handle_error(interaction, e)
 
+    @commands.Cog.listener()
+    async def on_member_remove(self, member: discord.Member):
+        try:
+            verification_data = harmony_db.get_verification_data(discord_user_id=member.id)
+
+            if verification_data:
+                verification_data.delete()
+        except Exception as e:
+            logger.warning(f"Member {member.name} left the Discord server, but failed to remove their data.")
+
     @tasks.loop(seconds=config["schedule"]["reddit_account_check_interval_seconds"])
     async def check_reddit_accounts(self):
         """
