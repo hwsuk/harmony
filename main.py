@@ -7,6 +7,7 @@ from discord.ext import commands
 from loguru import logger
 
 from harmony_cogs.verify import Verify
+from harmony_cogs.ebay import Ebay
 
 with open('config.json', 'r') as f:
     config = json.load(f)
@@ -35,6 +36,7 @@ class HarmonyBot(commands.Bot):
             )
 
         await self.add_cog(Verify(self))
+        await self.add_cog(Ebay(self))
 
 
 bot = HarmonyBot()

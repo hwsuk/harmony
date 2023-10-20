@@ -287,7 +287,7 @@ async def check_discord_roles_task(bot: commands.Bot):
             report_message += f"No users were missing verification data."
 
         if dry_run:
-            report_message += "\n\ninformation_source: No action was taken - this is a dry run."
+            report_message += "\n\n:information_source: No action was taken - this is a dry run."
 
         await reporting_channel.send(content=report_message)
 
