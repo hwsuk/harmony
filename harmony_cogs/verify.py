@@ -1,15 +1,14 @@
 import json
 import discord
-import prawcore.exceptions
 
 import harmony_ui
 import harmony_ui.verify
 
 from discord import app_commands
-from discord.ext import commands, tasks
+from discord.ext import commands
 from harmony_services import db as harmony_db
-from harmony_services import reddit as harmony_reddit
 from loguru import logger
+from harmony_scheduled.verify import check_reddit_accounts_task
 
 with open("config.json", "r") as f:
     config = json.load(f)
@@ -39,10 +38,10 @@ class Verify(commands.Cog):
         self.bot.tree.add_command(whois_context_menu)
         self.bot.tree.add_command(update_role_context_menu)
 
-        self.check_reddit_accounts.start()
+        check_reddit_accounts_task.start()
 
     def cog_unload(self) -> None:
-        self.check_reddit_accounts.cancel()
+        check_reddit_accounts_task.cancel()
 
     @app_commands.command(
         name='verify',
@@ -162,158 +161,6 @@ class Verify(commands.Cog):
                 verification_data.delete()
         except Exception as e:
             logger.warning(f"Member {member.name} left the Discord server, but failed to remove their data.")
-
-    @tasks.loop(seconds=config["schedule"]["reddit_account_check_interval_seconds"])
-    async def check_reddit_accounts(self):
-        """
-        Check Reddit accounts to make sure they haven't been banned from the subreddit, or deleted their account.
-        :return: Nothing.
-        """
-        job_enabled: bool = config["schedule"]["reddit_account_check_enabled"]
-
-        if not job_enabled:
-            logger.info("Scheduled Reddit account check is disabled.")
-            return
-
-        reporting_channel = None
-        removed_users = []
-        dry_run: bool = config["schedule"]["reddit_account_check_dry_run"]
-        bans_fetch_limit: int = config["schedule"]["reddit_account_check_ban_fetch_limit"]
-
-        try:
-            guild = await self.bot.fetch_guild(int(config["discord"]["guild_id"]))
-
-            if not guild:
-                raise Exception(f"Failed to fetch the guild with ID {config['discord']['guild_id']}.")
-
-            reporting_channel = await guild.fetch_channel(
-                config["schedule"]["reddit_account_check_reporting_channel_id"]
-            )
-
-            if not reporting_channel:
-                raise Exception(f"Failed to fetch the reporting channel with ID "
-                                f"{config['schedule']['reddit_account_check_reporting_channel_id']}.")
-
-            if not isinstance(reporting_channel, discord.TextChannel):
-                raise Exception(f"Reporting channel is not a TextChannel, ID: "
-                                f"{config['schedule']['reddit_account_check_reporting_channel_id']}.")
-
-            logger.info("Running scheduled job to cleanup banned/missing Reddit users")
-
-            users = harmony_db.get_all_verification_data()
-
-            logger.info(f"Fetching bans from r/{subreddit_name}, limit={bans_fetch_limit}")
-            subreddit_bans = [redditor.name for redditor in harmony_reddit.subreddit_bans(subreddit_name, limit=bans_fetch_limit)]
-
-            logger.info(f"Done - got {len(subreddit_bans)} bans.")
-
-            for user in users:
-                reddit_username = user.reddit_user.reddit_username
-                try:
-                    member = await guild.fetch_member(user.discord_user.discord_user_id)
-                except discord.errors.NotFound:
-                    logger.info(f"Redditor u/{reddit_username} is no longer in the Discord server, cleaning up data.")
-
-                    if not dry_run:
-                        user.delete()
-
-                    continue
-
-                try:
-                    reddit_user_exists = harmony_reddit.reddit_user_exists(reddit_username)
-                    reddit_account_suspended = harmony_reddit.redditor_suspended(reddit_username)
-                    reddit_account_sub_banned = reddit_username in subreddit_bans
-                except prawcore.exceptions.TooManyRequests:
-                    logger.warning(f"Hit Reddit rate limit while processing member {member.name}, ignoring for now.")
-                    continue
-
-                if not reddit_user_exists:
-                    logger.info(f"Member {member.name}'s Reddit account no longer exists: u/{reddit_username}")
-                    removed_users.append(reddit_username)
-
-                    if not dry_run:
-                        await member.remove_roles(verified_role, reason="User's Reddit account no longer exists.")
-                        try:
-                            await member.send(
-                                embed=harmony_ui.verify.create_nonexistent_reddit_account_embed(
-                                    reddit_username,
-                                    guild.name
-                                )
-                            )
-                        except Exception:
-                            logger.warning(f"Failed to notify {member.name} "
-                                           f"that their Reddit account u/{reddit_username} doesn't exist.")
-
-                        user.delete()
-                    continue
-
-                if reddit_account_suspended:
-                    logger.info(f"Member {member.name}'s Reddit account is suspended: u/{reddit_username}")
-                    removed_users.append(reddit_username)
-
-                    if not dry_run:
-                        await member.remove_roles(verified_role, reason="User's Reddit account is suspended.")
-                        try:
-                            await member.send(
-                                embed=harmony_ui.verify.create_suspended_reddit_account_embed(
-                                    reddit_username,
-                                    guild.name
-                                )
-                            )
-                        except Exception:
-                            logger.warning(f"Failed to notify {member.name} "
-                                           f"that their Reddit account u/{reddit_username} is suspended.")
-
-                        user.delete()
-                    continue
-
-                if reddit_account_sub_banned:
-                    logger.info(f"Member {member.name}'s Reddit account (u/{reddit_username}) "
-                                f"is banned from r/{subreddit_name}")
-                    removed_users.append(reddit_username)
-                    if not dry_run:
-                        try:
-                            await member.send(
-                                embed=harmony_ui.verify.create_banned_reddit_account_embed(
-                                    reddit_username,
-                                    guild.name,
-                                    subreddit_name
-                                )
-                            )
-                        except Exception:
-                            logger.warning(f"Failed to notify {member.name} "
-                                           f"that their Reddit account u/{reddit_username} "
-                                           f"is banned from r/{subreddit_name}.")
-
-                        await member.ban(reason=f"Linked reddit account u/{reddit_username} "
-                                                f"is banned from r/{subreddit_name}")
-
-                        user.delete()
-                    continue
-
-            report_message = f"All verified Reddit users checked. "
-
-            if removed_users:
-                report_message += f"{len(removed_users)} users were processed:\n\n"
-
-                for removed_user in removed_users:
-                    report_message += f"- **u/{removed_user}**\n"
-            else:
-                report_message += "No users were processed."
-
-            if dry_run:
-                report_message += "\n\n:information_source: No action has been taken because the dry run flag is set."
-
-            await reporting_channel.send(content=report_message)
-
-        except Exception as e:
-            logger.error(f"Something went wrong while running the Reddit accounts ban check job.")
-
-            if reporting_channel and isinstance(reporting_channel, discord.TextChannel):
-                await reporting_channel.send(content="## Something went wrong when checking Reddit users!\n\n"
-                                               "Please check the bot logs for more details.")
-
-            raise e
 
     async def display_whois_result(self, interaction: discord.Interaction, member: discord.Member):
         verification_data = harmony_db.get_verification_data(discord_user_id=member.id)
