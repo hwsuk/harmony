@@ -34,6 +34,10 @@
     "reddit_account_check_interval_seconds": 86400,
     "reddit_account_check_reporting_channel_id": 0,
     "reddit_account_check_dry_run": false,
-    "reddit_account_check_ban_fetch_limit": 10000
+    "reddit_account_check_ban_fetch_limit": 10000,
+    "discord_role_check_enabled": true,
+    "discord_role_check_interval_seconds": 86400,
+    "discord_role_check_reporting_channel_id": 0,
+    "discord_role_check_dry_run": false
   }
 }

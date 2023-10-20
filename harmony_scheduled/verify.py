@@ -14,13 +14,15 @@ with open("config.json", "r") as f:
     config = json.load(f)
 
 subreddit_name = config["reddit"]["subreddit_name"]
-verified_role = discord.Object(config["discord"]["verified_role_id"])
+verified_role_id = config["discord"]["verified_role_id"]
+verified_role = discord.Object(verified_role_id)
 
 
 @tasks.loop(seconds=config["schedule"]["reddit_account_check_interval_seconds"])
 async def check_reddit_accounts_task(bot: commands.Bot):
     """
     Check Reddit accounts to make sure they haven't been banned from the subreddit, or deleted their account.
+    :param bot: A reference to the bot instance used for Discord operations.
     :return: Nothing.
     """
     job_enabled: bool = config["schedule"]["reddit_account_check_enabled"]
@@ -188,7 +190,7 @@ async def check_reddit_accounts_task(bot: commands.Bot):
                 report_message += f"- **u/{failed_notification['reddit_username']}\n"
 
         if dry_run:
-            report_message += "\n:information_source: No action has been taken because the dry run flag is set."
+            report_message += "\n:information_source: No action has been taken - this is a dry run."
 
         await reporting_channel.send(content=report_message)
 
@@ -197,6 +199,104 @@ async def check_reddit_accounts_task(bot: commands.Bot):
 
         if reporting_channel and isinstance(reporting_channel, discord.TextChannel):
             await reporting_channel.send(content="## Something went wrong when checking Reddit users!\n\n"
+                                                 "Please check the bot logs for more details.")
+
+        raise e
+
+
+@tasks.loop(seconds=config["schedule"]["discord_role_check_interval_seconds"])
+async def check_discord_roles_task(bot: commands.Bot):
+    """
+    Check all users of the configured verified role ID to see if they have data in the DB.
+    If not, then remove them, and let them know.
+    :param bot: A reference to the bot instance used for Discord operations.
+    :return: Nothing.
+    """
+    job_enabled: bool = config["schedule"]["discord_role_check_enabled"]
+
+    if not job_enabled:
+        logger.info("Scheduled Discord verified role check is disabled.")
+        return
+
+    reporting_channel = None
+    removed_users = []
+    dry_run = config["schedule"]["discord_role_check_dry_run"]
+    report_message = ""
+
+    try:
+        guild = bot.get_guild(int(config["discord"]["guild_id"]))
+
+        if not guild:
+            raise Exception(f"Failed to fetch the guild with ID {config['discord']['guild_id']}.")
+
+        reporting_channel = await guild.fetch_channel(
+            config["schedule"]["reddit_account_check_reporting_channel_id"]
+        )
+
+        if not reporting_channel:
+            raise Exception(f"Failed to fetch the reporting channel with ID "
+                            f"{config['schedule']['reddit_account_check_reporting_channel_id']}.")
+
+        if not isinstance(reporting_channel, discord.TextChannel):
+            raise Exception(f"Reporting channel is not a TextChannel, ID: "
+                            f"{config['schedule']['reddit_account_check_reporting_channel_id']}.")
+
+        logger.info("Running scheduled job to cleanup Discord users without verification data.")
+
+        verified_guild_role = guild.get_role(verified_role_id)
+
+        if not verified_guild_role:
+            raise Exception(f"Configured verified role with ID {verified_role_id} could not be found.")
+
+        for member in verified_guild_role.members:
+            logger.debug(f"checking {member.name} ({member.id})")
+            if not harmony_db.has_verification_data(member.id):
+                removal_data = {
+                    "discord_member_name": member.name,
+                    "removal_reason": "No linked Reddit account found.",
+                    "user_notified": True
+                }
+
+                logger.info(f"Member {member.name} has the {verified_guild_role.name} role "
+                            f"without a linked Reddit account, removing.")
+
+                if not dry_run:
+                    await member.remove_roles(
+                        verified_role,
+                        reason="User does not have a linked Reddit account."
+                    )
+
+                    try:
+                        await member.send(
+                            embed=harmony_ui.verify.create_no_verification_data_embed(
+                                guild_name=guild.name,
+                                subreddit_name=subreddit_name
+                            )
+                        )
+                    except Exception:
+                        logger.warning(f"Failed to notify {member.name} that their verified role has been revoked.")
+                        removal_data["user_notified"] = False
+
+                removed_users.append(removal_data)
+
+        report_message = f"All members of the {verified_guild_role.name} role have been checked. "
+
+        if removed_users:
+            report_message += (f"{len(removed_users)} users were removed due to missing verification data.\n\n"
+                               f"Please see the bot logs for more details.")
+        else:
+            report_message += f"No users were missing verification data."
+
+        if dry_run:
+            report_message += "information_source: No action was taken - this is a dry run."
+
+        await reporting_channel.send(content=report_message)
+
+    except Exception as e:
+        logger.error(f"Something went wrong while running the Discord verified role check job.")
+
+        if reporting_channel and isinstance(reporting_channel, discord.TextChannel):
+            await reporting_channel.send(content="## Something went wrong when checking Discord roles!\n\n"
                                                  "Please check the bot logs for more details.")
 
         raise e

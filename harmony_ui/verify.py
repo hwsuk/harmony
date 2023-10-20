@@ -301,3 +301,18 @@ def create_banned_reddit_account_embed(username: str, guild_name: str, subreddit
         If you think this is in error, please contact the moderation team.
         """
     )
+
+
+def create_no_verification_data_embed(guild_name: str, subreddit_name: str) -> discord.Embed:
+    return discord.Embed(
+        title=f"You don't seem to have a verified Reddit account",
+        description=f"""
+        It looks like you don't have a verified Reddit account.
+
+        Access to certain parts of the {guild_name} Discord server requires that you link a Reddit account that isn't banned from r/{subreddit_name}. As a result, your access has been removed.
+        
+        Not to worry! You can fix this by typing `/verify` in any of the channels you still have access to, and following the steps to link your Reddit account.
+
+        If you think this is in error, please contact the moderation team.
+        """
+    )

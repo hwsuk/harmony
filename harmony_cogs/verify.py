@@ -8,7 +8,7 @@ from discord import app_commands
 from discord.ext import commands
 from harmony_services import db as harmony_db
 from loguru import logger
-from harmony_scheduled.verify import check_reddit_accounts_task
+from harmony_scheduled.verify import check_reddit_accounts_task, check_discord_roles_task
 
 with open("config.json", "r") as f:
     config = json.load(f)
@@ -39,9 +39,11 @@ class Verify(commands.Cog):
         self.bot.tree.add_command(update_role_context_menu)
 
         check_reddit_accounts_task.start(self.bot)
+        check_discord_roles_task.start(self.bot)
 
     def cog_unload(self) -> None:
         check_reddit_accounts_task.cancel()
+        check_discord_roles_task.cancel()
 
     @app_commands.command(
         name='verify',
