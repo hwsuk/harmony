@@ -233,12 +233,16 @@ class Verify(commands.Cog):
 
                     if not dry_run:
                         await member.remove_roles(verified_role, reason="User's Reddit account no longer exists.")
-                        await member.send(
-                            embed=harmony_ui.verify.create_nonexistent_reddit_account_embed(
-                                reddit_username,
-                                guild.name
+                        try:
+                            await member.send(
+                                embed=harmony_ui.verify.create_nonexistent_reddit_account_embed(
+                                    reddit_username,
+                                    guild.name
+                                )
                             )
-                        )
+                        except Exception:
+                            logger.warning(f"Failed to notify {member.name} "
+                                           f"that their Reddit account u/{reddit_username} doesn't exist.")
 
                         user.delete()
                     continue
@@ -249,12 +253,16 @@ class Verify(commands.Cog):
 
                     if not dry_run:
                         await member.remove_roles(verified_role, reason="User's Reddit account is suspended.")
-                        await member.send(
-                            embed=harmony_ui.verify.create_suspended_reddit_account_embed(
-                                reddit_username,
-                                guild.name
+                        try:
+                            await member.send(
+                                embed=harmony_ui.verify.create_suspended_reddit_account_embed(
+                                    reddit_username,
+                                    guild.name
+                                )
                             )
-                        )
+                        except Exception:
+                            logger.warning(f"Failed to notify {member.name} "
+                                           f"that their Reddit account u/{reddit_username} is suspended.")
 
                         user.delete()
                     continue
@@ -264,13 +272,18 @@ class Verify(commands.Cog):
                                 f"is banned from r/{subreddit_name}")
                     removed_users.append(reddit_username)
                     if not dry_run:
-                        await member.send(
-                            embed=harmony_ui.verify.create_banned_reddit_account_embed(
-                                reddit_username,
-                                guild.name,
-                                subreddit_name
+                        try:
+                            await member.send(
+                                embed=harmony_ui.verify.create_banned_reddit_account_embed(
+                                    reddit_username,
+                                    guild.name,
+                                    subreddit_name
+                                )
                             )
-                        )
+                        except Exception:
+                            logger.warning(f"Failed to notify {member.name} "
+                                           f"that their Reddit account u/{reddit_username} "
+                                           f"is banned from r/{subreddit_name}.")
 
                         await member.ban(reason=f"Linked reddit account u/{reddit_username} "
                                                 f"is banned from r/{subreddit_name}")
