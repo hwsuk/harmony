@@ -5,7 +5,7 @@ import harmony_ui
 import harmony_ui.verify
 
 from loguru import logger
-from discord.ext import tasks
+from discord.ext import tasks, commands
 from harmony_services import db as harmony_db
 from harmony_services import reddit as harmony_reddit
 
@@ -18,7 +18,7 @@ verified_role = discord.Object(config["discord"]["verified_role_id"])
 
 
 @tasks.loop(seconds=config["schedule"]["reddit_account_check_interval_seconds"])
-async def check_reddit_accounts_task():
+async def check_reddit_accounts_task(bot: commands.Bot):
     """
     Check Reddit accounts to make sure they haven't been banned from the subreddit, or deleted their account.
     :return: Nothing.
@@ -35,7 +35,7 @@ async def check_reddit_accounts_task():
     bans_fetch_limit: int = config["schedule"]["reddit_account_check_ban_fetch_limit"]
 
     try:
-        guild = await self.bot.fetch_guild(int(config["discord"]["guild_id"]))
+        guild = await bot.fetch_guild(int(config["discord"]["guild_id"]))
 
         if not guild:
             raise Exception(f"Failed to fetch the guild with ID {config['discord']['guild_id']}.")

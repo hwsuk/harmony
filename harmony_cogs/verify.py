@@ -38,7 +38,7 @@ class Verify(commands.Cog):
         self.bot.tree.add_command(whois_context_menu)
         self.bot.tree.add_command(update_role_context_menu)
 
-        check_reddit_accounts_task.start()
+        check_reddit_accounts_task.start(self.bot)
 
     def cog_unload(self) -> None:
         check_reddit_accounts_task.cancel()
