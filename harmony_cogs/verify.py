@@ -1,5 +1,7 @@
 import json
 import discord
+import prawcore.exceptions
+
 import harmony_ui
 import harmony_ui.verify
 
@@ -194,16 +196,20 @@ class Verify(commands.Cog):
                 try:
                     member = await guild.fetch_member(user.discord_user.discord_user_id)
                 except discord.errors.NotFound:
-                    logger.info(f"Redditor u/{reddit_username} is no longer in the Discord server, cleaning up data")
+                    logger.info(f"Redditor u/{reddit_username} is no longer in the Discord server, cleaning up data.")
 
                     if not dry_run:
                         user.delete()
 
                     continue
 
-                reddit_user_exists = harmony_reddit.reddit_user_exists(reddit_username)
-                reddit_account_suspended = harmony_reddit.redditor_suspended(reddit_username)
-                reddit_account_sub_banned = reddit_username in subreddit_bans
+                try:
+                    reddit_user_exists = harmony_reddit.reddit_user_exists(reddit_username)
+                    reddit_account_suspended = harmony_reddit.redditor_suspended(reddit_username)
+                    reddit_account_sub_banned = reddit_username in subreddit_bans
+                except prawcore.exceptions.TooManyRequests:
+                    logger.warning(f"Hit Reddit rate limit while processing member {member.name}, ignoring for now.")
+                    continue
 
                 if not reddit_user_exists:
                     logger.info(f"Member {member.name}'s Reddit account no longer exists: u/{reddit_username}")
