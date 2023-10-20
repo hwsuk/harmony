@@ -249,7 +249,6 @@ async def check_discord_roles_task(bot: commands.Bot):
             raise Exception(f"Configured verified role with ID {verified_role_id} could not be found.")
 
         for member in verified_guild_role.members:
-            logger.debug(f"checking {member.name} ({member.id})")
             if not harmony_db.has_verification_data(member.id):
                 removal_data = {
                     "discord_member_name": member.name,
@@ -288,7 +287,7 @@ async def check_discord_roles_task(bot: commands.Bot):
             report_message += f"No users were missing verification data."
 
         if dry_run:
-            report_message += "information_source: No action was taken - this is a dry run."
+            report_message += "\n\ninformation_source: No action was taken - this is a dry run."
 
         await reporting_channel.send(content=report_message)
 
