@@ -1,16 +1,16 @@
 Hey u/$_username,
 
-You recently requested to verify your account on the HardwareSwapUK Discord server.
+You recently requested to verify your account on the $_guild_name Discord server.
 
 To complete verification, run the `/verify` command again, and enter the following verification code:
 
 `$_verification_code`
 
-If this wasn't you, please send a modmail to /r/HardwareSwapUK.
+If this wasn't you, please send a modmail to /r/$_subreddit_name.
 
 Thanks,
 
-The /r/HardwareSwapUK mod team
+The /r/$_subreddit_name mod team
 
 ---
 

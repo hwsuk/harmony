@@ -21,7 +21,7 @@ except KeyError:
 _mongodb_connection_string = f"mongodb://{db_username}:{db_password}@{db_host}:{db_port}/{db_name}"
 
 if db_replica_set:
-    _mongodb_connection_string += f"?replSetName={db_replica_set}"
+    _mongodb_connection_string += f"?replicaSet={db_replica_set}"
 
 connection = mongoengine.connect(
     host=_mongodb_connection_string
