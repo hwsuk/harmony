@@ -42,17 +42,29 @@ def load_verification_message_template() -> None:
         raise RuntimeError("Verification message template does not contain the correct substitution variables.")
 
 
-def create_verification_message(username: str, verification_code: str) -> str:
+def create_verification_message(
+        username: str,
+        verification_code: str,
+        subreddit_name: str,
+        guild_name: str
+) -> str:
     """
     Use the previously loaded verification template to generate a verification message.
     :param username: The username to include in the message.
     :param verification_code: The verification code to include in the message.
+    :param subreddit_name: The subreddit name to include in the message.
+    :param guild_name: The guild name to include in the message.
     :return: The completed verification message.
     """
     global verification_message_template
 
     message = str(verification_message_template)
-    return message.replace("$_username", username).replace("$_verification_code", verification_code)
+    return (message
+            .replace("$_username", username)
+            .replace("$_verification_code", verification_code)
+            .replace("$_subreddit_name", subreddit_name)
+            .replace("$_guild_name", guild_name)
+            )
 
 
 def reddit_user_exists(username: str) -> bool:
@@ -133,11 +145,18 @@ def get_subreddit(subreddit: str) -> typing.Optional[praw.models.Subreddit]:
         return None
 
 
-def send_verification_message(username: str, verification_code: str) -> None:
+def send_verification_message(
+        username: str,
+        verification_code: str,
+        subreddit_name: str,
+        guild_name: str
+) -> None:
     """
     Send a message to the user with their verification code in it.
     :param username: The user to send the message to.
     :param verification_code: The verification code to include in the message.
+    :param subreddit_name: The name of the subreddit to include in the message.
+    :param guild_name: The name of the guild to include in the message.
     :return: Nothing.
     """
 
@@ -146,7 +165,12 @@ def send_verification_message(username: str, verification_code: str) -> None:
 
     redditor = get_redditor(username)
 
-    message_contents = create_verification_message(username, verification_code)
+    message_contents = create_verification_message(
+        username,
+        verification_code,
+        subreddit_name,
+        guild_name
+    )
 
     redditor.message(subject="Your /r/HardwareSwapUK Discord verification code", message=message_contents)
 

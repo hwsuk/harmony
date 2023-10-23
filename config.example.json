@@ -45,6 +45,7 @@
   },
   "verify": {
     "discord_minimum_account_age_days": 3,
-    "reddit_minimum_account_age_days": 3
+    "reddit_minimum_account_age_days": 3,
+    "token_prefix": "token_"
   }
 }

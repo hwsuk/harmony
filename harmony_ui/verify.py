@@ -22,6 +22,8 @@ with open("config.json", "r") as f:
 configured_verify_role_data = config["roles"]
 verified_role = discord.Object(config["discord"]["verified_role_id"])
 user_management_role = discord.Object(config["discord"]["harmony_management_role_id"])
+subreddit_name = config["reddit"]["subreddit_name"]
+verification_token_prefix = config["verify"]["token_prefix"]
 
 reddit_required_account_age = config["verify"]["reddit_minimum_account_age_days"]
 discord_required_account_age = config["verify"]["discord_minimum_account_age_days"]
@@ -110,7 +112,7 @@ class VerificationTokenField(discord.ui.TextInput):
     def __init__(self):
         super().__init__(
             label='Please enter your verification code.',
-            placeholder='hwsuk_',
+            placeholder=verification_token_prefix,
             required=True
         )
 
@@ -160,7 +162,7 @@ class EnterRedditUsernameModal(discord.ui.Modal, title='Verify your Reddit accou
 
         reddit_user = harmony_reddit.get_redditor(username)
 
-        verification_code = self.generate_verification_code(prefix="hwsuk_")
+        verification_code = self.generate_verification_code(prefix=verification_token_prefix)
 
         # Save pending verification data to MongoDB.
         pending_verification_data = verify_models.PendingVerification(
@@ -188,7 +190,12 @@ class EnterRedditUsernameModal(discord.ui.Modal, title='Verify your Reddit accou
             '''
         )
 
-        harmony_reddit.send_verification_message(username, verification_code)
+        harmony_reddit.send_verification_message(
+            username,
+            verification_code,
+            subreddit_name,
+            interaction.guild.name
+        )
 
         # Send the user instructions on how to proceed.
         await interaction.response.send_message(embed=embed, ephemeral=True)
