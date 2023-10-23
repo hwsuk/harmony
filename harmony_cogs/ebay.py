@@ -48,6 +48,11 @@ class Ebay(commands.Cog):
         """
         logger.info(f"{interaction.user.name} searched eBay with query '{search_query}'")
 
+        await interaction.response.send_message(
+            f":mag: Searching for **{search_query}**...",
+            ephemeral=True
+        )
+
         try:
             html = await self.fetch_website_data(search_query)
             parse_result = await self.parse_website_data(html)
@@ -55,18 +60,18 @@ class Ebay(commands.Cog):
             if parse_result.trimmed_price_list:
                 result_stats = self.calculate_result_averages(parse_result)
 
-                await interaction.response.send_message(
+                await interaction.edit_original_response(
+                    content=None,
                     embed=harmony_ui.ebay.create_items_found_embed(
                         search_query,
                         parse_result,
                         result_stats
-                    ),
-                    ephemeral=True
+                    )
                 )
             else:
-                await interaction.response.send_message(
-                    embed=harmony_ui.ebay.create_no_items_found_embed(search_query),
-                    ephemeral=True
+                await interaction.edit_original_response(
+                    content=None,
+                    embed=harmony_ui.ebay.create_no_items_found_embed(search_query)
                 )
         except Exception as e:
             await harmony_ui.handle_error(interaction, e)
