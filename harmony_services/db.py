@@ -12,10 +12,19 @@ db_host = config["db"]["hostname"]
 db_port = config["db"]["port"]
 db_username = config["db"]["username"]
 db_password = config["db"]["password"]
-db_replica_set = config["db"]["replica_set_name"]
+
+try:
+    db_replica_set = config["db"]["replica_set_name"]
+except KeyError:
+    db_replica_set = None
+
+_mongodb_connection_string = f"mongodb://{db_username}:{db_password}@{db_host}:{db_port}/{db_name}"
+
+if db_replica_set:
+    _mongodb_connection_string += f"?replSetName={db_replica_set}"
 
 connection = mongoengine.connect(
-    host=f"mongodb://{db_username}:{db_password}@{db_host}:{db_port}/{db_name}?replicaSet={db_replica_set}"
+    host=_mongodb_connection_string
 )
 
 
