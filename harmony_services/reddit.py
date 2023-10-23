@@ -1,3 +1,4 @@
+import datetime
 import json
 import typing
 
@@ -101,6 +102,23 @@ def get_redditor(username: str) -> typing.Optional[praw.models.Redditor]:
         return reddit.redditor(username)
     except prawcore.exceptions.NotFound:
         return None
+
+
+def get_account_age_days(username: str) -> int:
+    """
+    Get the specified Redditor's account age, in days.
+    :param username: The Redditor's username, not beginning with u/.
+    :return: The Redditor's account age, in days.
+    """
+    redditor = get_redditor(username)
+
+    if redditor and hasattr(redditor, "created_utc"):
+        account_created_timestamp = datetime.datetime.fromtimestamp(redditor.created_utc, tz=datetime.timezone.utc)
+        now_timestamp = datetime.datetime.now(tz=datetime.timezone.utc)
+
+        return (now_timestamp - account_created_timestamp).days
+    else:
+        raise RuntimeError(f"Failed to fetch data for redditor u/{username}")
 
 
 def get_subreddit(subreddit: str) -> typing.Optional[praw.models.Subreddit]:
