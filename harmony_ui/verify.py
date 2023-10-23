@@ -1,3 +1,4 @@
+import datetime
 import json
 import random
 import re
@@ -21,6 +22,9 @@ with open("config.json", "r") as f:
 configured_verify_role_data = config["roles"]
 verified_role = discord.Object(config["discord"]["verified_role_id"])
 user_management_role = discord.Object(config["discord"]["harmony_management_role_id"])
+
+reddit_required_account_age = config["verify"]["reddit_minimum_account_age_days"]
+discord_required_account_age = config["verify"]["discord_minimum_account_age_days"]
 
 
 class UpdateRoleSelect(discord.ui.Select):
@@ -121,7 +125,20 @@ class EnterRedditUsernameModal(discord.ui.Modal, title='Verify your Reddit accou
 
         return f"{prefix}{code}"
 
-    async def send_verification_code(self, interaction: discord.Interaction) -> None:
+    async def send_account_age_not_met_modal(
+            self,
+            interaction: discord.Interaction,
+            account_type: typing.Literal["Discord", "Reddit"],
+            required_age_days: int
+    ) -> typing.NoReturn:
+        await interaction.response.send_message(
+            embed=harmony_ui.verify.create_account_age_requirement_not_met_embed(
+                account_type=account_type,
+                required_age_days=required_age_days
+            )
+        )
+
+    async def send_verification_code(self, interaction: discord.Interaction) -> typing.NoReturn:
         # Is the username even valid?
         username = self.reddit_username_field.value
 
@@ -175,10 +192,22 @@ class EnterRedditUsernameModal(discord.ui.Modal, title='Verify your Reddit accou
         # Send the user instructions on how to proceed.
         await interaction.response.send_message(embed=embed, ephemeral=True)
 
-    async def on_submit(self, interaction: discord.Interaction) -> None:
-        await self.send_verification_code(interaction)
+    async def on_submit(self, interaction: discord.Interaction) -> typing.NoReturn:
+        username = self.reddit_username_field.value.replace('u/', '')
+        discord_account_age_days = (datetime.datetime.now(tz=datetime.timezone.utc) - interaction.user.created_at).days
 
-    async def on_error(self, interaction: discord.Interaction, error: Exception) -> None:
+        if harmony_reddit.get_account_age_days(username) < reddit_required_account_age:
+            await self.send_account_age_not_met_modal(
+                interaction, "Reddit", reddit_required_account_age
+            )
+        elif discord_account_age_days < discord_required_account_age:
+            await self.send_account_age_not_met_modal(
+                interaction, "Discord", discord_required_account_age
+            )
+        else:
+            await self.send_verification_code(interaction)
+
+    async def on_error(self, interaction: discord.Interaction, error: Exception) -> typing.NoReturn:
         await harmony_ui.handle_error(interaction, error)
 
 
@@ -199,7 +228,7 @@ class EnterVerificationTokenModal(discord.ui.Modal, title='Enter your verificati
         pending_verification.delete()
 
     @staticmethod
-    async def assign_role(member: discord.Member) -> None:
+    async def assign_role(member: discord.Member) -> typing.NoReturn:
         """
         Assign the configured role to the specified member.
         :param member: The member to whom the role should be assigned.
@@ -207,7 +236,7 @@ class EnterVerificationTokenModal(discord.ui.Modal, title='Enter your verificati
         """
         await member.add_roles(verified_role, reason="Verified using Harmony Bot")
 
-    async def complete_verification(self, interaction: discord.Interaction) -> None:
+    async def complete_verification(self, interaction: discord.Interaction) -> typing.NoReturn:
         entered_code = self.verification_token_field.value
 
         pending_verification = harmony_db.get_pending_verification(interaction.user.id)
@@ -222,10 +251,10 @@ class EnterVerificationTokenModal(discord.ui.Modal, title='Enter your verificati
             await interaction.response.send_message("That code doesn't look right. Please try again.",
                                                     ephemeral=True)
 
-    async def on_submit(self, interaction: discord.Interaction) -> None:
+    async def on_submit(self, interaction: discord.Interaction) -> typing.NoReturn:
         await self.complete_verification(interaction)
 
-    async def on_error(self, interaction: discord.Interaction, error: Exception) -> None:
+    async def on_error(self, interaction: discord.Interaction, error: Exception) -> typing.NoReturn:
         await harmony_ui.handle_error(interaction, error)
 
 
@@ -248,10 +277,10 @@ class UnverifyConfirmationModal(discord.ui.Modal, title="Enter your Reddit usern
             await interaction.response.send_message(
                 "Looks like you didn't enter the correct Reddit username. Please check and try again.", ephemeral=True)
 
-    async def on_submit(self, interaction: discord.Interaction) -> None:
+    async def on_submit(self, interaction: discord.Interaction) -> typing.NoReturn:
         await self.unverify(interaction)
 
-    async def on_error(self, interaction: discord.Interaction, error: Exception) -> None:
+    async def on_error(self, interaction: discord.Interaction, error: Exception) -> typing.NoReturn:
         await harmony_ui.handle_error(interaction, error)
 
 
@@ -260,7 +289,7 @@ class UpdateRoleView(discord.ui.View):
         super().__init__()
         self.add_item(UpdateRoleSelect(target_member, original_interaction))
 
-    async def on_error(self, interaction: discord.Interaction, error: Exception, item: Item[Any], /) -> None:
+    async def on_error(self, interaction: discord.Interaction, error: Exception, item: Item[Any], /) -> typing.NoReturn:
         await harmony_ui.handle_error(interaction, error)
 
 
@@ -314,5 +343,19 @@ def create_no_verification_data_embed(guild_name: str, subreddit_name: str) -> d
         Not to worry! You can fix this by typing `/verify` in any of the channels you still have access to, and following the steps to link your Reddit account.
 
         If you think this is in error, please contact the moderation team.
+        """
+    )
+
+
+def create_account_age_requirement_not_met_embed(
+        account_type: typing.Literal["Discord", "Reddit"],
+        required_age_days: int
+):
+    return discord.Embed(
+        title=f"Your {account_type} account is too new",
+        description=f"""
+        To link your Reddit and Discord accounts, your {account_type} account needs to be at least {required_age_days} days old.
+        
+        Please try again when your {account_type} account is old enough to meet these requirements. 
         """
     )

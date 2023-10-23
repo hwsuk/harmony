@@ -42,5 +42,9 @@
   },
   "ebay": {
     "http_proxy_url": "https://example:example@localhost:9090"
+  },
+  "verify": {
+    "discord_minimum_account_age_days": 3,
+    "reddit_minimum_account_age_days": 3
   }
 }
