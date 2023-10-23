@@ -135,7 +135,8 @@ class EnterRedditUsernameModal(discord.ui.Modal, title='Verify your Reddit accou
             embed=harmony_ui.verify.create_account_age_requirement_not_met_embed(
                 account_type=account_type,
                 required_age_days=required_age_days
-            )
+            ),
+            ephemeral=True
         )
 
     async def send_verification_code(self, interaction: discord.Interaction) -> typing.NoReturn:
