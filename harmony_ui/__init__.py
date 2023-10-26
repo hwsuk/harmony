@@ -33,4 +33,7 @@ async def handle_error(interaction: discord.Interaction, error: Exception) -> No
         """
     )
 
-    await interaction.response.send_message(embed=embed, ephemeral=True)
+    if interaction.response.is_done():
+        await interaction.edit_original_response(content=None, embed=embed)
+    else:
+        await interaction.response.send_message(embed=embed, ephemeral=True)

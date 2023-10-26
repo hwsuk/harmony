@@ -22,6 +22,7 @@ idna==3.4
 loguru==0.7.0
 mongoengine==0.27.0
 multidict==6.0.4
+munch==4.0.0
 praw==7.7.0
 prawcore==2.3.0
 pymongo==4.3.3
