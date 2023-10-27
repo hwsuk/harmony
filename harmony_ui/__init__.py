@@ -1,12 +1,13 @@
 import random
 import string
-import traceback
+import typing
 import discord
+import traceback
 
 from loguru import logger
 
 
-async def handle_error(interaction: discord.Interaction, error: Exception) -> None:
+async def handle_error(interaction: discord.Interaction, error: Exception) -> typing.NoReturn:
     """
     Handle an exception encountered during an interaction.
     :param interaction: The interaction in which the exception was raised.

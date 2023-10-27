@@ -22,7 +22,7 @@ reddit = praw.Reddit(
 verification_message_template = None
 
 
-def load_verification_message_template() -> None:
+def load_verification_message_template() -> typing.NoReturn:
     """
     Load the verification message template as markdown, and verify that it has the correct template variables.
     :return: Nothing.
@@ -150,7 +150,7 @@ def send_verification_message(
         verification_code: str,
         subreddit_name: str,
         guild_name: str
-) -> None:
+) -> typing.NoReturn:
     """
     Send a message to the user with their verification code in it.
     :param username: The user to send the message to.
@@ -175,7 +175,7 @@ def send_verification_message(
     redditor.message(subject="Your /r/HardwareSwapUK Discord verification code", message=message_contents)
 
 
-def update_user_flair(username: str, flair_text: str, css_class_name: str) -> None:
+def update_user_flair(username: str, flair_text: str, css_class_name: str) -> typing.NoReturn:
     """
     Update a user's flair.
     :param username: The username of the user whose flair should be updated.

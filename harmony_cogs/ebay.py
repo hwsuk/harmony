@@ -1,6 +1,7 @@
 import bs4
 import json
 import httpx
+import typing
 import discord
 import statistics
 import urllib.parse
@@ -39,7 +40,7 @@ class Ebay(commands.Cog):
     )
     @app_commands.guild_only
     @app_commands.guilds(discord.Object(int(config["discord"]["guild_id"])))
-    async def ebay(self, interaction: discord.Interaction, search_query: str) -> None:
+    async def ebay(self, interaction: discord.Interaction, search_query: str) -> typing.NoReturn:
         """
         Method invoked when the user performs the eBay search slash command.
         :param interaction: The interaction to use to send messages.
