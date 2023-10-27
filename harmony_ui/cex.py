@@ -13,7 +13,7 @@ class CexSearchResultView(discord.ui.View):
             original_interaction: discord.Interaction,
             original_search_query: str
     ):
-        super().__init__()
+        super().__init__(timeout=None)
 
         self.original_interaction = original_interaction
         self.current_result_index = 0
