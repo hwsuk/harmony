@@ -26,8 +26,6 @@ vault operator unseal "${keyArray[2]}"
 
 # Get root token
 mapfile -t rootToken < <(grep "Initial Root Token: " < /data/generated_keys.txt  | cut -c21- )
-echo "${rootToken[0]}" > root_token.txt
-
 export VAULT_TOKEN=${rootToken[0]}
 
 # Enable kv
