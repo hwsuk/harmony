@@ -10,9 +10,7 @@ import harmony_ui.cex
 from loguru import logger
 from discord import app_commands
 from discord.ext import commands
-
-with open("config.json", "r") as f:
-    config = json.load(f)
+from harmony_config import config
 
 
 class CexSearch(commands.Cog):
@@ -20,20 +18,20 @@ class CexSearch(commands.Cog):
 
     def __init__(self, bot: commands.Bot):
         self.bot = bot
-        self.proxy_url = None
 
         try:
-            self.proxy_url = config["cex"]["http_proxy_url"]
+            self.proxy_url = config.get_configuration_key("cex.http_proxy_url")
         except KeyError:
             logger.warning("No HTTP proxy is configured for the CeX searches.")
-            pass
+            self.proxy_url = None
 
     @app_commands.command(
         name='cex',
         description='Search CeX UK listings to get an idea of how to price your items.'
     )
     @app_commands.guild_only
-    @app_commands.guilds(discord.Object(int(config["discord"]["guild_id"])))
+    @app_commands.guilds(discord.Object(
+        config.get_configuration_key("discord.guild_id", required=True, expected_type=int)))
     async def cex_search(self, interaction: discord.Interaction, search_query: str) -> typing.NoReturn:
         """
         Method invoked when the user performs the CeX search slash command.

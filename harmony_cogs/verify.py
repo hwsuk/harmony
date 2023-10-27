@@ -1,22 +1,24 @@
-import json
 import typing
 import discord
 import harmony_ui
 import harmony_ui.verify
 
+from loguru import logger
 from discord import app_commands
 from discord.ext import commands
+from harmony_config import config
 from harmony_services import db as harmony_db
-from loguru import logger
 from harmony_scheduled.verify import check_reddit_accounts_task, check_discord_roles_task
 
-with open("config.json", "r") as f:
-    config = json.load(f)
-
-configured_verify_role_data = config["roles"]
-verified_role = discord.Object(config["discord"]["verified_role_id"])
-user_management_role = discord.Object(config["discord"]["harmony_management_role_id"])
-subreddit_name = config["reddit"]["subreddit_name"]
+configured_verify_role_data = config.get_configuration_key("roles", required=True, expected_type=list)
+subreddit_name = config.get_configuration_key("reddit.subreddit_name", required=True)
+guild_id = config.get_configuration_key("discord.guild_id", required=True, expected_type=int)
+verified_role = discord.Object(
+    config.get_configuration_key("discord.verified_role_id", required=True, expected_type=int)
+)
+user_management_role = discord.Object(
+    config.get_configuration_key("discord.harmony_management_role_id", required=True, expected_type=int)
+)
 
 
 class Verify(commands.Cog):
@@ -25,13 +27,13 @@ class Verify(commands.Cog):
 
         whois_context_menu = app_commands.ContextMenu(
             name="Whois",
-            guild_ids=[int(config["discord"]["guild_id"])],
+            guild_ids=[guild_id],
             callback=self.display_whois_result
         )
 
         update_role_context_menu = app_commands.ContextMenu(
             name="Update Role",
-            guild_ids=[int(config["discord"]["guild_id"])],
+            guild_ids=[guild_id],
             callback=self.update_role
         )
 
@@ -50,7 +52,7 @@ class Verify(commands.Cog):
         description='Link your Reddit and Discord accounts to gain access to member-only benefits.'
     )
     @app_commands.guild_only
-    @app_commands.guilds(discord.Object(int(config["discord"]["guild_id"])))
+    @app_commands.guilds(discord.Object(guild_id))
     async def display_verification_dialog(self, interaction: discord.Interaction) -> typing.NoReturn:
         """
         Command to display the verification model, to allow users to verify their Reddit accounts.
@@ -77,7 +79,7 @@ class Verify(commands.Cog):
         description='Unlink your Discord and Reddit accounts.'
     )
     @app_commands.guild_only
-    @app_commands.guilds(discord.Object(int(config["discord"]["guild_id"])))
+    @app_commands.guilds(discord.Object(guild_id))
     async def display_unverify_dialog(self, interaction: discord.Interaction):
         try:
             if harmony_db.has_verification_data(interaction.user.id):
@@ -97,7 +99,7 @@ class Verify(commands.Cog):
         description='Look up a user to get information about their account.'
     )
     @app_commands.guild_only
-    @app_commands.guilds(discord.Object(int(config["discord"]["guild_id"])))
+    @app_commands.guilds(discord.Object(guild_id))
     async def whois(self, interaction: discord.Interaction, query: str):
         try:
             # Standardise the format of reddit username lookup
@@ -135,7 +137,7 @@ class Verify(commands.Cog):
         except Exception as e:
             await harmony_ui.handle_error(interaction, e)
 
-    @app_commands.checks.has_role(config["discord"]["harmony_management_role_id"])
+    @app_commands.checks.has_role(user_management_role)
     async def update_role(self, interaction: discord.Interaction, member: discord.Member):
         try:
             verification_data = harmony_db.get_verification_data(discord_user_id=member.id)

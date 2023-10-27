@@ -1,7 +1,6 @@
-import asyncio
-
 import munch
 import typing
+import asyncio
 import discord
 import urllib.parse
 

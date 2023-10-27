@@ -1,5 +1,6 @@
+from harmony_config import config
+
 import os
-import json
 import typing
 import discord
 import harmony_ui.feedback
@@ -10,9 +11,6 @@ from harmony_cogs.ebay import Ebay
 from harmony_cogs.verify import Verify
 from harmony_cogs.cex import CexSearch
 from harmony_cogs.feedback import Feedback
-
-with open('config.json', 'r') as f:
-    config = json.load(f)
 
 
 class HarmonyBot(commands.Bot):
@@ -49,7 +47,7 @@ bot = HarmonyBot()
 
 @bot.command()
 @commands.guild_only()
-@commands.has_role(config["discord"]["harmony_management_role_id"])
+@commands.has_role(config.get_configuration_key("discord.harmony_management_role_id", required=True, expected_type=int))
 async def sync(
         ctx: discord.ext.commands.Context,
         guilds: discord.ext.commands.Greedy[discord.Object],
@@ -93,4 +91,4 @@ async def sync(
     await ctx.send(f"Synced the tree to {ret}/{len(guilds)}.")
 
 
-bot.run(config["discord"]["bot_token"])
+bot.run(config.get_configuration_key("discord.bot_token", required=True))

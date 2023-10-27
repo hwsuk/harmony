@@ -1,4 +1,10 @@
 {
+  "configuration_provider": {
+    "name": "json",
+    "metadata": {
+      "config_file_location": "config.json"
+    }
+  },
   "discord": {
     "bot_token": "",
     "guild_id": 0,

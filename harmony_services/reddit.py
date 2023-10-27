@@ -1,25 +1,22 @@
-import datetime
-import json
 import typing
-
+import datetime
 import praw.models
 import prawcore.exceptions
 
+from harmony_config import config
 from loguru import logger
 
-with open('./config.json', 'r') as config_file:
-    config = json.load(config_file)
-
 reddit = praw.Reddit(
-    client_id=config['reddit']['client_id'],
-    client_secret=config['reddit']['client_secret'],
-    username=config['reddit']['username'],
-    password=config['reddit']['password'],
-    user_agent=config['reddit']['user_agent'],
+    client_id=config.get_configuration_key("reddit.client_id", required=True),
+    client_secret=config.get_configuration_key("reddit.client_secret", required=True),
+    username=config.get_configuration_key("reddit.username", required=True),
+    password=config.get_configuration_key("reddit.password", required=True),
+    user_agent=config.get_configuration_key("reddit.user_agent", required=True),
     check_for_async=False
 )
 
 verification_message_template = None
+subreddit_name = config.get_configuration_key("reddit.subreddit_name", required=True)
 
 
 def load_verification_message_template() -> typing.NoReturn:
@@ -187,7 +184,7 @@ def update_user_flair(username: str, flair_text: str, css_class_name: str) -> ty
     if not reddit_user_exists(username):
         raise RuntimeError("The specified Reddit user doesn't exist.")
 
-    subreddit = get_subreddit(config["reddit"]["subreddit_name"])
+    subreddit = get_subreddit(subreddit_name)
     subreddit.flair.set(username, flair_text, css_class=css_class_name)
 
 

@@ -1,20 +1,16 @@
-import json
 import typing
 import discord
-
 import harmony_services.db
 import harmony_ui.feedback
 
 from loguru import logger
 from discord import app_commands
 from discord.ext import commands
+from harmony_config import config
 
 
-with open("config.json", "r") as f:
-    config = json.load(f)
-
-feedback_channel_id = int(config["feedback"]["feedback_channel_id"])
-discord_guild_id = int(config["discord"]["guild_id"])
+feedback_channel_id = config.get_configuration_key("feedback.feedback_channel_id", required=True, expected_type=int)
+discord_guild_id = config.get_configuration_key("discord.guild_id", required=True, expected_type=int)
 
 
 class Feedback(commands.Cog):
@@ -31,7 +27,7 @@ class Feedback(commands.Cog):
         description='Create feedback items for the community to vote on.'
     )
     @app_commands.guild_only
-    @app_commands.guilds(discord.Object(int(config["discord"]["guild_id"])))
+    @app_commands.guilds(discord.Object(discord_guild_id))
     async def feedback(self, interaction: discord.Interaction) -> typing.NoReturn:
         """
         Method invoked when the user performs the feedback slash command.
