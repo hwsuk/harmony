@@ -7,4 +7,4 @@ venv/**
 # Don't commit this, it may contain tokens
 config.json
 vault/**
-/vault/**
+/vault/
