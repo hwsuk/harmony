@@ -71,6 +71,26 @@ Allows a user to search recently sold items on eBay to get an idea of how to pri
 
 ![A screenshot showing the result of the `/ebay` slash command on the Harmony Discord bot](images/ebay.png)
 
+### `/cex`
+
+- **Who can use this:** Any user.
+
+Allows a user to search items on CeX UK to get an idea of how to price any items they wish to sell.
+
+`/cex` takes one argument, the item to search for, and produces results based on the API's response to your query:
+
+![A screenshot showing the result of the `/cex` slash command on the Harmony Discord bot](images/cex.png)
+
+### `/feedback`
+
+- **Who can use this:** Any user.
+
+Allows a user to give feedback for other members of the server to vote on.
+
+![A screenshot showing the modal dialog that appears when you initiate a feedback request](images/feedback-step1.png)
+
+![A screenshot showing the modal dialog that appears when you complete a feedback request](images/feedback-step2.png)
+
 ## App Commands
 
 These commands can be run by right-clicking on a user or message, and selecting the Apps submenu.

@@ -3,6 +3,7 @@ import typing
 import mongoengine
 
 import harmony_models.verify as verify_models
+import harmony_models.feedback as feedback_models
 
 with open("config.json", "r") as f:
     config = json.load(f)
@@ -77,3 +78,24 @@ def has_verification_data(discord_user_id: int) -> bool:
     :return: True if the user has verification data, otherwise False.
     """
     return get_verification_data(discord_user_id=discord_user_id) is not None
+
+
+def get_feedback_data(message_id: int) -> typing.Optional[feedback_models.FeedbackItem]:
+    """
+    Fetch feedback data by the message ID containing its voting view.
+    :param message_id: The message ID to fetch.
+    :return: The feedback item, if it exists.
+    """
+    return feedback_models.FeedbackItem.objects(discord_message_id=message_id).first()
+
+
+def delete_feedback_data(message_id: int) -> typing.NoReturn:
+    """
+    Delete feedback data by the message ID containing its voting view.
+    :param message_id: The feedback data to delete, by the Discord message ID containing its voting view.
+    :return: Nothing.
+    """
+    feedback_data = get_feedback_data(message_id)
+
+    if feedback_data:
+        feedback_data.delete()

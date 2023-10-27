@@ -1,6 +1,6 @@
 import json
+import typing
 import discord
-
 import harmony_ui
 import harmony_ui.verify
 
@@ -20,7 +20,7 @@ subreddit_name = config["reddit"]["subreddit_name"]
 
 
 class Verify(commands.Cog):
-    def __init__(self, bot: commands.Bot) -> None:
+    def __init__(self, bot: commands.Bot) -> typing.NoReturn:
         self.bot = bot
 
         whois_context_menu = app_commands.ContextMenu(
@@ -41,7 +41,7 @@ class Verify(commands.Cog):
         check_reddit_accounts_task.start(self.bot)
         check_discord_roles_task.start(self.bot)
 
-    def cog_unload(self) -> None:
+    def cog_unload(self) -> typing.NoReturn:
         check_reddit_accounts_task.cancel()
         check_discord_roles_task.cancel()
 
@@ -51,7 +51,7 @@ class Verify(commands.Cog):
     )
     @app_commands.guild_only
     @app_commands.guilds(discord.Object(int(config["discord"]["guild_id"])))
-    async def display_verification_dialog(self, interaction: discord.Interaction) -> None:
+    async def display_verification_dialog(self, interaction: discord.Interaction) -> typing.NoReturn:
         """
         Command to display the verification model, to allow users to verify their Reddit accounts.
         :param interaction: The interaction context for this command.
@@ -185,5 +185,5 @@ class Verify(commands.Cog):
         await interaction.response.send_message(embed=embed, ephemeral=True)
 
 
-async def setup(bot: commands.Bot) -> None:
+async def setup(bot: commands.Bot) -> typing.NoReturn:
     await bot.add_cog(Verify(bot))
