@@ -40,7 +40,7 @@ class Ebay(commands.Cog):
     )
     @app_commands.guild_only
     @app_commands.guilds(discord.Object(int(config["discord"]["guild_id"])))
-    async def ebay(self, interaction: discord.Interaction, search_query: str) -> typing.NoReturn:
+    async def ebay(self, interaction: discord.Interaction, search_query: str, visible: bool = False) -> typing.NoReturn:
         """
         Method invoked when the user performs the eBay search slash command.
         :param interaction: The interaction to use to send messages.
@@ -51,7 +51,7 @@ class Ebay(commands.Cog):
 
         await interaction.response.send_message(
             f":mag: Searching for **{search_query}**...",
-            ephemeral=True
+            ephemeral=(not visible)
         )
 
         try:
