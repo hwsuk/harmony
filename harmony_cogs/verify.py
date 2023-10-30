@@ -1,3 +1,4 @@
+import re
 import typing
 import discord
 import harmony_ui
@@ -110,6 +111,12 @@ class Verify(commands.Cog):
 
             result = None
             guild_member = None
+
+            if query.startswith("<@"):
+                result = re.search(r'\d+', query)
+
+                if result:
+                    query = result[0]
 
             if query.startswith("u/"):
                 logger.info(f"/whois: {interaction.user.name} looked up user by Reddit username {query}")
