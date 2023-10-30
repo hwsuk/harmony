@@ -2,9 +2,34 @@
 
 This guide aims to document how to configure Harmony for your own use, or for development.
 
+## Configuration Providers
+
+Harmony has a concept of "configuration providers", which are classes that can provide configuration data on request.
+
+These are configured using `config.json` (which must be present even if you aren't using `json` as your config provider):
+
+```json
+{
+  "configuration_provider": {
+    "name": "json",
+    "metadata": {
+      "config_file_location": "config.json"
+    }
+  }
+}
+```
+
+The following configuration providers are available:
+
+### `json`
+
+Loads configuration from a JSON file.
+
+
+
 ## Config File Documentation
 
-This section aims to document all of the different fields in the `config.json` file, enabling you to configure the bot accordingly.
+This section aims to document all the different config fields that the bot uses, enabling you to configure accordingly.
 
 | Key                                                  | Description                                                                                                                                                                                                                                                                                                                                                                                              |
 |------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -40,6 +65,7 @@ This section aims to document all of the different fields in the `config.json` f
 | `verify.reddit_minimum_account_age_days`             | The minimum age of a Reddit account, in days, before the user is allowed to link their accounts.                                                                                                                                                                                                                                                                                                         | 
 | `verify.token_prefix`                                | The text that prefixes the verification token sent to the user when verifying their Reddit account.                                                                                                                                                                                                                                                                                                      | 
 | `feedback.feedback_channel_id`                       | The text channel to send new feedback requests to.                                                                                                                                                                                                                                                                                                                                                       | 
+| `cogs.load_on_startup`                               | A list of cogs to be loaded on startup.                                                                                                                                                                                                                                                                                                                                                                  | 
 
 ### Roles Configuration
 

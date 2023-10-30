@@ -67,7 +67,7 @@ Allows a user to search recently sold items on eBay to get an idea of how to pri
 
 > Note that the results of this function can be influenced by various factors, and is not guaranteed to yield accurate results. Use this only as a guideline.
 
-`/ebay` takes one argument, the item to search for, and produces results based on the last sold items (up to a maximum of 60 items):
+`/ebay` takes two arguments, the item to search for (required) and the visibility of the results message (optional), and produces results based on the last sold items (up to a maximum of 60 items):
 
 ![A screenshot showing the result of the `/ebay` slash command on the Harmony Discord bot](images/ebay.png)
 
