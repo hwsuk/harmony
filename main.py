@@ -130,7 +130,7 @@ async def manage_cogs(
                 try:
                     cog_class = harmony_cogs.fetch_cog_by_name(cog_name)
                 except KeyError:
-                    output_message += f":no_entry_sign: No cog with name `{cog_name}` was found.\n\n"
+                    output_message += f"- :no_entry_sign: No cog with name `{cog_name}` was found.\n"
                     continue
 
                 # Is the cog already loaded?
@@ -156,7 +156,7 @@ async def manage_cogs(
                 try:
                     cog_class = harmony_cogs.fetch_cog_by_name(cog_name)
                 except KeyError:
-                    output_message += f":no_entry_sign: No cog with name `{cog_name}` was found.\n\n"
+                    output_message += f"- :no_entry_sign: No cog with name `{cog_name}` was found.\n\n"
                     continue
 
                 # Is the cog even loaded?
