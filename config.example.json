@@ -56,5 +56,13 @@
   },
   "cex": {
     "http_proxy_url": "https://example:example@localhost:9090"
+  },
+  "cogs": {
+    "load_on_startup": [
+      "cex-search",
+      "ebay-search",
+      "feedback",
+      "verify"
+    ]
   }
 }

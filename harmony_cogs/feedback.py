@@ -14,6 +14,8 @@ discord_guild_id = config.get_configuration_key("discord.guild_id", required=Tru
 
 
 class Feedback(commands.Cog):
+    _cog_name = "feedback"
+
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 

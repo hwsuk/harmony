@@ -1,4 +1,3 @@
-import json
 import httpx
 import munch
 import typing
@@ -14,6 +13,8 @@ from harmony_config import config
 
 
 class CexSearch(commands.Cog):
+    _cog_name = "cex-search"
+
     base_url = "https://wss2.cex.uk.webuy.io/v3/boxes?q=$_SEARCH_QUERY&firstRecord=1&count=50&sortOrder=desc"
 
     def __init__(self, bot: commands.Bot):
