@@ -8,6 +8,7 @@ import harmony_ui.ebay
 import harmony_models.ebay
 
 from loguru import logger
+from main import HarmonyBot
 from discord import app_commands
 from discord.ext import commands
 from harmony_config import config
@@ -21,7 +22,7 @@ class Ebay(commands.Cog):
                "&_stpos=M300AA&_sargn=-1%26saslc%3D1&_fsradio2=%26LH_LocatedIn%3D1&_salic=3&LH_SubLocation=1" \
                "&_sop=12&_dmd=1&_ipg=60&LH_Complete=1&rt=nc&LH_PrefLoc=1"
 
-    def __init__(self, bot: commands.Bot):
+    def __init__(self, bot: HarmonyBot):
         self.bot = bot
 
         try:

@@ -4,6 +4,7 @@ import harmony_ui
 import harmony_ui.verify
 
 from loguru import logger
+from main import HarmonyBot
 from discord import app_commands
 from discord.ext import commands
 from harmony_config import config
@@ -24,7 +25,7 @@ user_management_role = discord.Object(
 class Verify(commands.Cog):
     _cog_name = "verify"
 
-    def __init__(self, bot: commands.Bot) -> typing.NoReturn:
+    def __init__(self, bot: HarmonyBot) -> typing.NoReturn:
         self.bot = bot
 
         whois_context_menu = app_commands.ContextMenu(

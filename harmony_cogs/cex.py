@@ -7,6 +7,7 @@ import harmony_ui
 import harmony_ui.cex
 
 from loguru import logger
+from main import HarmonyBot
 from discord import app_commands
 from discord.ext import commands
 from harmony_config import config
@@ -17,7 +18,7 @@ class CexSearch(commands.Cog):
 
     base_url = "https://wss2.cex.uk.webuy.io/v3/boxes?q=$_SEARCH_QUERY&firstRecord=1&count=50&sortOrder=desc"
 
-    def __init__(self, bot: commands.Bot):
+    def __init__(self, bot: HarmonyBot):
         self.bot = bot
 
         try:

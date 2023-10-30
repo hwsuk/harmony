@@ -18,6 +18,7 @@ harmony_management_role_id = config.get_configuration_key(
 
 class HarmonyBot(commands.Bot):
     loaded_cogs: typing.List[typing.Type[commands.Cog]] = []
+    is_starting_up: bool = True
 
     def __init__(self) -> typing.NoReturn:
         intents = discord.Intents.default()
@@ -53,6 +54,7 @@ class HarmonyBot(commands.Bot):
 
             self.loaded_cogs.append(cog_class)
 
+        self.is_starting_up = False
 
 bot = HarmonyBot()
 
@@ -142,7 +144,8 @@ async def manage_cogs(
                 try:
                     await ctx.bot.add_cog(cog_class(ctx.bot))
                 except Exception as e:
-                    output_message += f"- :no_entry_sign: Failed to load `{cog_name}`: `{e.__name__}`: {str(e)}\n"
+                    output_message += (f"- :no_entry_sign: Failed to load `{cog_name}`: "
+                                       f"`{type(e).__name__}`: {str(e)}\n")
                     continue
 
                 ctx.bot.loaded_cogs.append(cog_class)
@@ -168,7 +171,8 @@ async def manage_cogs(
                 try:
                     await ctx.bot.remove_cog(cog_class.__name__)
                 except Exception as e:
-                    output_message += f"- :no_entry_sign: Failed to unload `{cog_name}`: `{e.__name__}`: {str(e)}\n"
+                    output_message += (f"- :no_entry_sign: Failed to unload `{cog_name}`: "
+                                       f"`{type(e).__name__}`: {str(e)}\n")
                     continue
 
                 ctx.bot.loaded_cogs.remove(cog_class)

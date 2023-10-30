@@ -4,6 +4,7 @@ import harmony_services.db
 import harmony_ui.feedback
 
 from loguru import logger
+from main import HarmonyBot
 from discord import app_commands
 from discord.ext import commands
 from harmony_config import config
@@ -16,7 +17,7 @@ discord_guild_id = config.get_configuration_key("discord.guild_id", required=Tru
 class Feedback(commands.Cog):
     _cog_name = "feedback"
 
-    def __init__(self, bot: commands.Bot):
+    def __init__(self, bot: HarmonyBot):
         self.bot = bot
 
         self.feedback_channel = bot.get_guild(discord_guild_id).get_channel(feedback_channel_id)
