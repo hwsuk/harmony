@@ -46,8 +46,9 @@ class Feedback(commands.Cog):
         :param payload: The data about which message was deleted.
         :return: Nothing.
         """
-        logger.info(f"Deleting feedback data because message with ID {payload.message_id} "
-                    f"was deleted from #{self.feedback_channel.name}")
 
         if payload.channel_id == self.feedback_channel.id:
+            logger.info(f"Deleting feedback data because message with ID {payload.message_id} "
+                        f"was deleted from #{self.feedback_channel.name}")
+
             harmony_services.db.delete_feedback_data(payload.message_id)
