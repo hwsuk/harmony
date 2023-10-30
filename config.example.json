@@ -64,5 +64,17 @@
       "feedback",
       "verify"
     ]
+  },
+  "message_rate_limiter": {
+    "limited_channels": [
+      {
+        "channel_id": 0,
+        "rate_limit_seconds": 3600
+      },
+      {
+        "channel_id": 1,
+        "rate_limit_seconds": 3600
+      }
+    ]
   }
 }
