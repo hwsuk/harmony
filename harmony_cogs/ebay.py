@@ -14,6 +14,7 @@ from harmony_config import config
 
 
 class Ebay(commands.Cog):
+    _cog_name = "ebay-search"
 
     base_url = "https://www.ebay.co.uk/sch/i.html?_from=R40&_nkw=$_SEARCH_QUERY" \
                "&_sacat=0&LH_Sold=1&_udlo=&_udhi=&LH_ItemCondition=4&_samilow=&_samihi=" \

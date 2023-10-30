@@ -22,6 +22,8 @@ user_management_role = discord.Object(
 
 
 class Verify(commands.Cog):
+    _cog_name = "verify"
+
     def __init__(self, bot: commands.Bot) -> typing.NoReturn:
         self.bot = bot
 
