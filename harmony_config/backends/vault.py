@@ -5,6 +5,9 @@ from harmony_config.backends import BaseHarmonyConfigurationProvider, ConfigValu
 
 
 class VaultHarmonyConfigurationProvider(BaseHarmonyConfigurationProvider):
+
+    _provider_name = "vault"
+
     def __init__(self, metadata: munch.Munch):
         raise NotImplementedError("Vault configuration is not supported yet.")
 
