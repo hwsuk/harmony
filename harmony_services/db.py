@@ -2,6 +2,7 @@ import typing
 import mongoengine
 import harmony_models.verify as verify_models
 import harmony_models.feedback as feedback_models
+import harmony_models.message_rate_limiter as message_rate_limiter_models
 
 from harmony_config import config
 
@@ -92,3 +93,30 @@ def delete_feedback_data(message_id: int) -> typing.NoReturn:
 
     if feedback_data:
         feedback_data.delete()
+
+
+def save_rate_limiter_message_data(message_author: str, guild_channel_id: int) -> typing.NoReturn:
+    """
+    Create a message rate limiter data object.
+    :param message_author: The username of the message author.
+    :param guild_channel_id: The channel ID that the message was sent in.
+    :return: Nothing.
+    """
+    message_rate_limiter_models.MessageRateLimitItem(
+        author_username=message_author,
+        guild_channel_id=guild_channel_id
+    ).save()
+
+
+def get_rate_limiter_message_data(message_author: str, guild_channel_id: int) \
+        -> typing.Optional[message_rate_limiter_models.MessageRateLimitItem]:
+    """
+    Get a message rate limiter data object.
+    :param message_author: The username of the message author.
+    :param guild_channel_id: The channel ID that the message was sent in.
+    :return: The rate limiter data object if found, otherwise None.
+    """
+    return message_rate_limiter_models.MessageRateLimitItem.objects(
+        author_username=message_author,
+        guild_channel_id=guild_channel_id
+    ).first()
