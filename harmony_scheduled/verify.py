@@ -2,6 +2,7 @@ import discord
 import harmony_ui
 import harmony_ui.verify
 import prawcore.exceptions
+import harmony_services.usl
 
 from loguru import logger
 from harmony_config import config
@@ -71,7 +72,7 @@ async def check_reddit_accounts_task(bot: commands.Bot):
         if not isinstance(reporting_channel, discord.TextChannel):
             raise Exception(f"Reporting channel is not a TextChannel, ID: {reporting_channel_id}.")
 
-        logger.info("Running scheduled job to cleanup banned/missing Reddit users")
+        logger.info("Running scheduled job to cleanup banned/missing Reddit users.")
 
         users = harmony_db.get_all_verification_data()
 
@@ -331,3 +332,23 @@ async def check_discord_roles_task(bot: commands.Bot):
                                                  "Please check the bot logs for more details.")
 
         raise e
+
+
+@tasks.loop(seconds=config.get_configuration_key(
+    "schedule.usl_update_interval_seconds",
+    required=True,
+    expected_type=int
+))
+async def update_usl_task():
+    enabled = config.get_configuration_key(
+        "schedule.usl_update_enabled",
+        required=True,
+        expected_type=bool
+    )
+
+    if not enabled:
+        logger.info("Scheduled USL update is disabled.")
+        return
+
+    logger.info("Running scheduled job to update the Universal Scammer List.")
+    await harmony_services.usl.update_usl()
