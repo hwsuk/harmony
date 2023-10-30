@@ -4,10 +4,10 @@ import os
 import typing
 import discord
 import harmony_cogs
-import harmony_ui.feedback
 
 from loguru import logger
 from discord.ext import commands
+from harmony_ui.feedback import FeedbackItemView
 
 harmony_management_role_id = config.get_configuration_key(
     "discord.harmony_management_role_id",
@@ -27,7 +27,7 @@ class HarmonyBot(commands.Bot):
         super().__init__(intents=intents, command_prefix="$")
 
     async def setup_hook(self) -> typing.NoReturn:
-        self.add_view(harmony_ui.feedback.FeedbackItemView())
+        self.add_view(FeedbackItemView())
 
     async def on_ready(self):
         logger.info(f'Logged in as {self.user} (ID: {self.user.id})')
@@ -55,6 +55,7 @@ class HarmonyBot(commands.Bot):
             self.loaded_cogs.append(cog_class)
 
         self.is_starting_up = False
+
 
 bot = HarmonyBot()
 
@@ -192,4 +193,5 @@ async def manage_cogs(
 
     await ctx.send(output_message, ephemeral=True)
 
-bot.run(config.get_configuration_key("discord.bot_token", required=True))
+if __name__ == "__main__":
+    bot.run(config.get_configuration_key("discord.bot_token", required=True))
