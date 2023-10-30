@@ -10,7 +10,7 @@ from discord import app_commands
 from discord.ext import commands
 from harmony_config import config
 from harmony_services import db as harmony_db
-from harmony_scheduled.verify import check_reddit_accounts_task, check_discord_roles_task
+from harmony_scheduled.verify import check_reddit_accounts_task, check_discord_roles_task, update_usl_task
 
 configured_verify_role_data = config.get_configuration_key("roles", required=True, expected_type=list)
 subreddit_name = config.get_configuration_key("reddit.subreddit_name", required=True)
@@ -32,7 +32,7 @@ class Verify(commands.Cog):
         whois_context_menu = app_commands.ContextMenu(
             name="Whois",
             guild_ids=[guild_id],
-            callback=self.display_whois_result
+            callback=harmony_ui.verify.display_whois_result
         )
 
         update_role_context_menu = app_commands.ContextMenu(
@@ -46,10 +46,12 @@ class Verify(commands.Cog):
 
         check_reddit_accounts_task.start(self.bot)
         check_discord_roles_task.start(self.bot)
+        update_usl_task.start()
 
     def cog_unload(self) -> typing.NoReturn:
         check_reddit_accounts_task.cancel()
         check_discord_roles_task.cancel()
+        update_usl_task.cancel()
 
     @app_commands.command(
         name='verify',
@@ -143,7 +145,7 @@ class Verify(commands.Cog):
                                f"{result.discord_user.discord_user_id} returned no result")
                 raise Exception(f"Failed to lookup Discord user ID {result.discord_user.discord_user_id}")
 
-            await self.display_whois_result(interaction=interaction, member=guild_member)
+            await harmony_ui.verify.display_whois_result(interaction=interaction, member=guild_member)
         except Exception as e:
             await harmony_ui.handle_error(interaction, e)
 
@@ -175,26 +177,6 @@ class Verify(commands.Cog):
                 verification_data.delete()
         except Exception as e:
             logger.warning(f"Member {member.name} left the Discord server, but failed to remove their data.")
-
-    async def display_whois_result(self, interaction: discord.Interaction, member: discord.Member):
-        verification_data = harmony_db.get_verification_data(discord_user_id=member.id)
-
-        embed = discord.Embed(
-            title=f"Whois information for {member.display_name}"
-        )
-
-        embed.set_thumbnail(url=member.display_avatar.url)
-
-        embed.add_field(name="Verified Reddit account", value="Yes" if verification_data else "No")
-
-        if verification_data:
-            embed.add_field(name="Reddit username", value=verification_data.reddit_user.reddit_username,
-                            inline=False)
-
-            embed.add_field(name="Verified since", value=verification_data.user_verification_data.verified_at,
-                            inline=False)
-
-        await interaction.response.send_message(embed=embed, ephemeral=True)
 
 
 async def setup(bot: commands.Bot) -> typing.NoReturn:

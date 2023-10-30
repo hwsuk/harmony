@@ -5,6 +5,7 @@ import string
 import discord
 import datetime
 import harmony_ui
+import harmony_services.usl
 
 from loguru import logger
 from harmony_config import config
@@ -309,6 +310,33 @@ class UpdateRoleView(discord.ui.View):
     async def on_error(self, interaction: discord.Interaction, error: Exception, item: discord.ui.Item) \
             -> typing.NoReturn:
         await harmony_ui.handle_error(interaction, error)
+
+
+async def display_whois_result(interaction: discord.Interaction, member: discord.Member):
+    verification_data = harmony_db.get_verification_data(discord_user_id=member.id)
+    usl_data = await harmony_services.usl.lookup_usl(verification_data.reddit_user.reddit_username)
+
+    embed = discord.Embed(
+        title=f"Whois information for {member.display_name}"
+    )
+
+    embed.set_thumbnail(url=member.display_avatar.url)
+
+    embed.add_field(name="Verified Reddit account", value="Yes" if verification_data else "No")
+
+    if verification_data:
+        embed.add_field(name="Reddit username", value=verification_data.reddit_user.reddit_username,
+                        inline=False)
+
+        embed.add_field(
+            name="Verified since",
+            value=f"<t:{int(verification_data.user_verification_data.verified_at.timestamp())}:F>",
+            inline=False
+        )
+
+        embed.add_field(name="On USL?", value="No" if not usl_data else f"Yes! ({', '.join(usl_data)})")
+
+    await interaction.response.send_message(embed=embed, ephemeral=True)
 
 
 def create_nonexistent_reddit_account_embed(username: str, guild_name: str) -> discord.Embed:
