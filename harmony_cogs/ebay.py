@@ -1,5 +1,4 @@
 import bs4
-import json
 import httpx
 import typing
 import discord
@@ -11,9 +10,7 @@ import harmony_models.ebay
 from loguru import logger
 from discord import app_commands
 from discord.ext import commands
-
-with open("config.json", "r") as f:
-    config = json.load(f)
+from harmony_config import config
 
 
 class Ebay(commands.Cog):
@@ -26,25 +23,25 @@ class Ebay(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
-        self.proxy_url = None
-
         try:
-            self.proxy_url = config["ebay"]["http_proxy_url"]
+            self.proxy_url = config.get_configuration_key("ebay.http_proxy_url")
         except KeyError:
             logger.warning("No HTTP proxy is configured for the eBay searches.")
-            pass
+            self.proxy_url = None
 
     @app_commands.command(
         name='ebay',
         description='Search recently-completed eBay listings to get an idea of how to price your items.'
     )
     @app_commands.guild_only
-    @app_commands.guilds(discord.Object(int(config["discord"]["guild_id"])))
+    @app_commands.guilds(discord.Object(
+        config.get_configuration_key("discord.guild_id", required=True, expected_type=int)))
     async def ebay(self, interaction: discord.Interaction, search_query: str, visible: bool = False) -> typing.NoReturn:
         """
         Method invoked when the user performs the eBay search slash command.
         :param interaction: The interaction to use to send messages.
         :param search_query: The query to use when searching eBay.
+        :param visible: True: send the response as a normal message, False: send the response as an ephemeral message
         :return: Nothing.
         """
         logger.info(f"{interaction.user.name} searched eBay with query '{search_query}'")

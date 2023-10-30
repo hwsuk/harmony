@@ -28,5 +28,25 @@ services:
         source: ./db
         target: /data/db
 
+  vault:
+    image: "hashicorp/vault:latest"
+    container_name: "harmony-vault"
+    restart: on-failure
+    ports:
+      - "8200:8200"
+    environment:
+      VAULT_ADDR: 'https://0.0.0.0:8200'
+      ADMIN_USERNAME: 'admin'
+      ADMIN_PASSWORD: 'ThisIsYourAdminPassword'
+    cap_add:
+      - IPC_LOCK
+    volumes:
+      - type: bind
+        source: ./vault
+        target: /data
+    command: /data/init.sh
+    networks:
+      - harmony
+
 networks:
   harmony:

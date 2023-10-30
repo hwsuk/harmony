@@ -1,23 +1,16 @@
-import json
 import typing
 import mongoengine
-
 import harmony_models.verify as verify_models
 import harmony_models.feedback as feedback_models
 
-with open("config.json", "r") as f:
-    config = json.load(f)
+from harmony_config import config
 
-db_name = config["db"]["db_name"]
-db_host = config["db"]["hostname"]
-db_port = config["db"]["port"]
-db_username = config["db"]["username"]
-db_password = config["db"]["password"]
-
-try:
-    db_replica_set = config["db"]["replica_set_name"]
-except KeyError:
-    db_replica_set = None
+db_name = config.get_configuration_key("db.db_name", required=True)
+db_host = config.get_configuration_key("db.hostname", required=True)
+db_port = config.get_configuration_key("db.port", required=True, expected_type=int)
+db_username = config.get_configuration_key("db.username", required=True)
+db_password = config.get_configuration_key("db.password", required=True)
+db_replica_set = config.get_configuration_key("db.replica_set_name")
 
 _mongodb_connection_string = f"mongodb://{db_username}:{db_password}@{db_host}:{db_port}/{db_name}"
 

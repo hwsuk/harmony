@@ -1,32 +1,41 @@
-import datetime
-import json
-import random
 import re
-import string
-import harmony_ui
 import typing
-from typing import Any
-
+import random
+import string
 import discord
-from discord._types import ClientT
-from discord.ui import Item
-from loguru import logger
+import datetime
+import harmony_ui
 
-from harmony_models import verify as verify_models
+from loguru import logger
+from harmony_config import config
 from harmony_services import db as harmony_db
+from harmony_models import verify as verify_models
 from harmony_services import reddit as harmony_reddit
 
-with open("config.json", "r") as f:
-    config = json.load(f)
 
-configured_verify_role_data = config["roles"]
-verified_role = discord.Object(config["discord"]["verified_role_id"])
-user_management_role = discord.Object(config["discord"]["harmony_management_role_id"])
-subreddit_name = config["reddit"]["subreddit_name"]
-verification_token_prefix = config["verify"]["token_prefix"]
-
-reddit_required_account_age = config["verify"]["reddit_minimum_account_age_days"]
-discord_required_account_age = config["verify"]["discord_minimum_account_age_days"]
+configured_verify_role_data = config.get_configuration_key("roles", required=True, expected_type=list)
+subreddit_name = config.get_configuration_key("reddit.subreddit_name", required=True)
+verification_token_prefix = config.get_configuration_key("verify.token_prefix", required=True)
+verified_role = discord.Object(config.get_configuration_key(
+    "discord.verified_role_id",
+    required=True,
+    expected_type=int
+))
+user_management_role = discord.Object(config.get_configuration_key(
+    "discord.harmony_management_role_id",
+    required=True,
+    expected_type=int
+))
+reddit_required_account_age = config.get_configuration_key(
+    "verify.reddit_minimum_account_age_days",
+    required=True,
+    expected_type=int
+)
+discord_required_account_age = config.get_configuration_key(
+    "verify.discord_minimum_account_age_days",
+    required=True,
+    expected_type=int
+)
 
 
 class UpdateRoleSelect(discord.ui.Select):
@@ -44,7 +53,7 @@ class UpdateRoleSelect(discord.ui.Select):
             options=self.update_role_options
         )
 
-    async def callback(self, interaction: discord.Interaction[ClientT]) -> Any:
+    async def callback(self, interaction: discord.Interaction) -> typing.Any:
         # Disable the dropdown box on the original interaction
         self.disabled = True
         await self.original_interaction.edit_original_response(view=self.view)
@@ -297,7 +306,8 @@ class UpdateRoleView(discord.ui.View):
         super().__init__()
         self.add_item(UpdateRoleSelect(target_member, original_interaction))
 
-    async def on_error(self, interaction: discord.Interaction, error: Exception, item: Item[Any], /) -> typing.NoReturn:
+    async def on_error(self, interaction: discord.Interaction, error: Exception, item: discord.ui.Item) \
+            -> typing.NoReturn:
         await harmony_ui.handle_error(interaction, error)
 
 

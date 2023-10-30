@@ -1,31 +1,36 @@
-import json
 import discord
-import prawcore.exceptions
 import harmony_ui
 import harmony_ui.verify
+import prawcore.exceptions
 
 from loguru import logger
+from harmony_config import config
 from discord.ext import tasks, commands
 from harmony_services import db as harmony_db
 from harmony_services import reddit as harmony_reddit
 
 
-with open("config.json", "r") as f:
-    config = json.load(f)
-
-subreddit_name = config["reddit"]["subreddit_name"]
-verified_role_id = config["discord"]["verified_role_id"]
+subreddit_name = config.get_configuration_key("reddit.subreddit_name", required=True)
+verified_role_id = config.get_configuration_key("discord.verified_role_id", required=True, expected_type=int)
 verified_role = discord.Object(verified_role_id)
 
 
-@tasks.loop(seconds=config["schedule"]["reddit_account_check_interval_seconds"])
+@tasks.loop(seconds=config.get_configuration_key(
+    "schedule.reddit_account_check_interval_seconds",
+    required=True,
+    expected_type=int
+))
 async def check_reddit_accounts_task(bot: commands.Bot):
     """
     Check Reddit accounts to make sure they haven't been banned from the subreddit, or deleted their account.
     :param bot: A reference to the bot instance used for Discord operations.
     :return: Nothing.
     """
-    job_enabled: bool = config["schedule"]["reddit_account_check_enabled"]
+    job_enabled: bool = config.get_configuration_key(
+        "schedule.reddit_account_check_enabled",
+        required=True,
+        expected_type=bool
+    )
 
     if not job_enabled:
         logger.info("Scheduled Reddit account check is disabled.")
@@ -33,26 +38,38 @@ async def check_reddit_accounts_task(bot: commands.Bot):
 
     reporting_channel = None
     removed_users = []
-    dry_run: bool = config["schedule"]["reddit_account_check_dry_run"]
-    bans_fetch_limit: int = config["schedule"]["reddit_account_check_ban_fetch_limit"]
+    dry_run: bool = config.get_configuration_key(
+        "schedule.reddit_account_check_dry_run",
+        required=True,
+        expected_type=bool
+    )
+    bans_fetch_limit: int = config.get_configuration_key(
+        "schedule.reddit_account_check_ban_fetch_limit",
+        required=True,
+        expected_type=int
+    )
 
     try:
-        guild = await bot.fetch_guild(int(config["discord"]["guild_id"]))
+        guild_id = config.get_configuration_key("discord.guild_id", required=True, expected_type=int)
+        guild = await bot.fetch_guild(guild_id)
 
         if not guild:
-            raise Exception(f"Failed to fetch the guild with ID {config['discord']['guild_id']}.")
+            raise Exception(f"Failed to fetch the guild with ID {guild_id}.")
 
-        reporting_channel = await guild.fetch_channel(
-            config["schedule"]["reddit_account_check_reporting_channel_id"]
+        reporting_channel_id = config.get_configuration_key(
+            "schedule.reddit_account_check_reporting_channel_id",
+            required=True,
+            expected_type=int
         )
+
+        reporting_channel = await guild.fetch_channel(reporting_channel_id)
 
         if not reporting_channel:
             raise Exception(f"Failed to fetch the reporting channel with ID "
-                            f"{config['schedule']['reddit_account_check_reporting_channel_id']}.")
+                            f"{reporting_channel_id}.")
 
         if not isinstance(reporting_channel, discord.TextChannel):
-            raise Exception(f"Reporting channel is not a TextChannel, ID: "
-                            f"{config['schedule']['reddit_account_check_reporting_channel_id']}.")
+            raise Exception(f"Reporting channel is not a TextChannel, ID: {reporting_channel_id}.")
 
         logger.info("Running scheduled job to cleanup banned/missing Reddit users")
 
@@ -204,7 +221,11 @@ async def check_reddit_accounts_task(bot: commands.Bot):
         raise e
 
 
-@tasks.loop(seconds=config["schedule"]["discord_role_check_interval_seconds"])
+@tasks.loop(seconds=config.get_configuration_key(
+    "schedule.discord_role_check_interval_seconds",
+    required=True,
+    expected_type=int
+))
 async def check_discord_roles_task(bot: commands.Bot):
     """
     Check all users of the configured verified role ID to see if they have data in the DB.
@@ -212,7 +233,11 @@ async def check_discord_roles_task(bot: commands.Bot):
     :param bot: A reference to the bot instance used for Discord operations.
     :return: Nothing.
     """
-    job_enabled: bool = config["schedule"]["discord_role_check_enabled"]
+    job_enabled: bool = config.get_configuration_key(
+        "schedule.discord_role_check_enabled",
+        required=True,
+        expected_type=bool
+    )
 
     if not job_enabled:
         logger.info("Scheduled Discord verified role check is disabled.")
@@ -220,26 +245,33 @@ async def check_discord_roles_task(bot: commands.Bot):
 
     reporting_channel = None
     removed_users = []
-    dry_run = config["schedule"]["discord_role_check_dry_run"]
     report_message = ""
+    dry_run = config.get_configuration_key(
+        "schedule.discord_role_check_dry_run",
+        required=True,
+        expected_type=bool
+    )
 
     try:
-        guild = bot.get_guild(int(config["discord"]["guild_id"]))
+        guild_id = config.get_configuration_key("discord.guild_id", required=True, expected_type=int)
+        guild = await bot.fetch_guild(guild_id)
 
         if not guild:
-            raise Exception(f"Failed to fetch the guild with ID {config['discord']['guild_id']}.")
+            raise Exception(f"Failed to fetch the guild with ID {guild_id}.")
 
-        reporting_channel = await guild.fetch_channel(
-            config["schedule"]["reddit_account_check_reporting_channel_id"]
+        reporting_channel_id = config.get_configuration_key(
+            "schedule.discord_role_check_reporting_channel_id",
+            required=True,
+            expected_type=int
         )
 
+        reporting_channel = await guild.fetch_channel(reporting_channel_id)
+
         if not reporting_channel:
-            raise Exception(f"Failed to fetch the reporting channel with ID "
-                            f"{config['schedule']['reddit_account_check_reporting_channel_id']}.")
+            raise Exception(f"Failed to fetch the reporting channel with ID {reporting_channel_id}.")
 
         if not isinstance(reporting_channel, discord.TextChannel):
-            raise Exception(f"Reporting channel is not a TextChannel, ID: "
-                            f"{config['schedule']['reddit_account_check_reporting_channel_id']}.")
+            raise Exception(f"Reporting channel is not a TextChannel, ID: {reporting_channel_id}.")
 
         logger.info("Running scheduled job to cleanup Discord users without verification data.")
 
