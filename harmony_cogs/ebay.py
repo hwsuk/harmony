@@ -19,7 +19,7 @@ with open("config.json", "r") as f:
 class Ebay(commands.Cog):
 
     base_url = "https://www.ebay.co.uk/sch/i.html?_from=R40&_nkw=$_SEARCH_QUERY" \
-               "&_in_kw=4&_ex_kw=&_sacat=0&LH_Sold=1&_udlo=&_udhi=&LH_ItemCondition=4&_samilow=&_samihi=" \
+               "&_sacat=0&LH_Sold=1&_udlo=&_udhi=&LH_ItemCondition=4&_samilow=&_samihi=" \
                "&_stpos=M300AA&_sargn=-1%26saslc%3D1&_fsradio2=%26LH_LocatedIn%3D1&_salic=3&LH_SubLocation=1" \
                "&_sop=12&_dmd=1&_ipg=60&LH_Complete=1&rt=nc&LH_PrefLoc=1"
 
@@ -40,7 +40,7 @@ class Ebay(commands.Cog):
     )
     @app_commands.guild_only
     @app_commands.guilds(discord.Object(int(config["discord"]["guild_id"])))
-    async def ebay(self, interaction: discord.Interaction, search_query: str) -> typing.NoReturn:
+    async def ebay(self, interaction: discord.Interaction, search_query: str, visible: bool = False) -> typing.NoReturn:
         """
         Method invoked when the user performs the eBay search slash command.
         :param interaction: The interaction to use to send messages.
@@ -51,7 +51,7 @@ class Ebay(commands.Cog):
 
         await interaction.response.send_message(
             f":mag: Searching for **{search_query}**...",
-            ephemeral=True
+            ephemeral=(not visible)
         )
 
         try:
