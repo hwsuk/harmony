@@ -1,4 +1,4 @@
-from harmony_config import config
+from harmony_config import config  # DO NOT move this import, it'll break the config resolver
 
 import os
 import typing
