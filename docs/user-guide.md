@@ -67,9 +67,13 @@ Allows a user to search recently sold items on eBay to get an idea of how to pri
 
 > Note that the results of this function can be influenced by various factors, and is not guaranteed to yield accurate results. Use this only as a guideline.
 
-`/ebay` takes two arguments, the item to search for (required) and the visibility of the results message (optional), and produces results based on the last sold items (up to a maximum of 60 items):
+`/ebay` takes two arguments, the item to search for (required) and the visibility of the results message (optional), and produces results based on the last sold items:
 
 ![A screenshot showing the result of the `/ebay` slash command on the Harmony Discord bot](images/ebay.png)
+
+Due to the nature of eBay search, there are normally 60 search results, and these 60 results are used. Sometimes, there may be cases where the results total beyond 60.
+Regardless of the number of results, trimming still works to remove 30% of the total results - 15% of the highest and lowest, all to reduce the number of anomalies. 
+
 
 ### `/cex`
 
