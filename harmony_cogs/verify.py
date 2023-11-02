@@ -18,9 +18,14 @@ guild_id = config.get_configuration_key("discord.guild_id", required=True, expec
 verified_role = discord.Object(
     config.get_configuration_key("discord.verified_role_id", required=True, expected_type=int)
 )
-user_management_role = discord.Object(
-    config.get_configuration_key("discord.harmony_management_role_id", required=True, expected_type=int)
+
+user_management_role_id = config.get_configuration_key(
+    "discord.harmony_management_role_id",
+    required=True,
+    expected_type=int
 )
+
+user_management_role = discord.Object(user_management_role_id)
 
 
 class Verify(commands.Cog):
@@ -149,7 +154,7 @@ class Verify(commands.Cog):
         except Exception as e:
             await harmony_ui.handle_error(interaction, e)
 
-    @app_commands.checks.has_role(user_management_role)
+    @app_commands.checks.has_role(user_management_role_id)
     async def update_role(self, interaction: discord.Interaction, member: discord.Member):
         try:
             verification_data = harmony_db.get_verification_data(discord_user_id=member.id)
