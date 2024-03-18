@@ -75,17 +75,24 @@ class MessageRateLimiter(commands.Cog):
 
                 guild_channel = message.guild.get_channel(message.channel.id)
 
-                await message.author.send(embed=harmony_ui.message_rate_limiter.create_message_limited_embed(
-                    author_name=message.author.name,
-                    guild_name=message.guild.name,
-                    guild_channel_name=guild_channel.name,
-                    guild_channel_url=guild_channel.jump_url,
-                    original_message_timestamp=rate_limiter_data.message_timestamp,
-                    rate_limit_seconds=channel_limit.rate_limit_seconds,
-                    deleted_message_content=message.clean_content
-                ))
-
                 await message.delete()
+
+                try:
+                    await message.author.send(
+                        embed=harmony_ui.message_rate_limiter.create_message_limited_embed(
+                            author_name=message.author.name,
+                            guild_name=message.guild.name,
+                            guild_channel_name=guild_channel.name,
+                            guild_channel_url=guild_channel.jump_url,
+                            original_message_timestamp=rate_limiter_data.message_timestamp,
+                            rate_limit_seconds=channel_limit.rate_limit_seconds,
+                            deleted_message_content=message.clean_content()
+                        )
+                    )
+                except discord.errors.DiscordException as e:
+                    logger.warning(f"Failed to PM user {message.author.name} with message rate-limit, "
+                                   f"got exception: {str(e)}")
+
             else:
                 # Delete their existing data and move on.
                 rate_limiter_data.delete()
