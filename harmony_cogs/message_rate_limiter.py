@@ -86,7 +86,7 @@ class MessageRateLimiter(commands.Cog):
                             guild_channel_url=guild_channel.jump_url,
                             original_message_timestamp=rate_limiter_data.message_timestamp,
                             rate_limit_seconds=channel_limit.rate_limit_seconds,
-                            deleted_message_content=message.clean_content()
+                            deleted_message_content=message.clean_content
                         )
                     )
                 except discord.errors.DiscordException as e:
