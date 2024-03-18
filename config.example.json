@@ -9,7 +9,8 @@
     "bot_token": "",
     "guild_id": 0,
     "harmony_management_role_id": 0,
-    "verified_role_id": 0
+    "verified_role_id": 0,
+    "unverified_role_id": 0
   },
   "reddit": {
     "client_id": "",
@@ -78,5 +79,8 @@
         "rate_limit_seconds": 3600
       }
     ]
+  },
+  "feedback": {
+    "feedback_channel_id": 0
   }
 }
