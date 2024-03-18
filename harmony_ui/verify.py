@@ -22,6 +22,11 @@ verified_role = discord.Object(config.get_configuration_key(
     required=True,
     expected_type=int
 ))
+unverified_role = discord.Object(config.get_configuration_key(
+    "discord.unverified_role_id",
+    required=True,
+    expected_type=int
+))
 user_management_role = discord.Object(config.get_configuration_key(
     "discord.harmony_management_role_id",
     required=True,
@@ -246,12 +251,13 @@ class EnterVerificationTokenModal(discord.ui.Modal, title='Enter your verificati
         pending_verification.delete()
 
     @staticmethod
-    async def assign_role(member: discord.Member) -> typing.NoReturn:
+    async def update_roles(member: discord.Member) -> typing.NoReturn:
         """
         Assign the configured role to the specified member.
         :param member: The member to whom the role should be assigned.
         :return: Nothing.
         """
+        await member.remove_roles(unverified_role, reason="Verified using Harmony Bot")
         await member.add_roles(verified_role, reason="Verified using Harmony Bot")
 
     async def complete_verification(self, interaction: discord.Interaction) -> typing.NoReturn:
@@ -261,7 +267,7 @@ class EnterVerificationTokenModal(discord.ui.Modal, title='Enter your verificati
 
         if pending_verification.pending_verification_data.verification_code == entered_code:
             self.update_db(pending_verification)
-            await self.assign_role(interaction.user)
+            await self.update_roles(interaction.user)
 
             await interaction.response.send_message("Done! You've successfully linked your Reddit account.",
                                                     ephemeral=True)
@@ -290,6 +296,8 @@ class UnverifyConfirmationModal(discord.ui.Modal, title="Enter your Reddit usern
             verification_data.delete()
 
             await interaction.user.remove_roles(verified_role, reason="Unverified using Harmony Bot")
+            await interaction.user.add_roles(unverified_role, reason="Unverified using Harmony Bot")
+
             await interaction.response.send_message("Unverified successfully.", ephemeral=True)
         else:
             await interaction.response.send_message(

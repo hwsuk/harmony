@@ -4,16 +4,19 @@ import harmony_models.verify as verify_models
 import harmony_models.feedback as feedback_models
 import harmony_models.message_rate_limiter as message_rate_limiter_models
 
+from loguru import logger
 from harmony_config import config
 
 db_name = config.get_configuration_key("db.db_name", required=True)
 db_host = config.get_configuration_key("db.hostname", required=True)
 db_port = config.get_configuration_key("db.port", required=True, expected_type=int)
-db_username = config.get_configuration_key("db.username", required=True)
-db_password = config.get_configuration_key("db.password", required=True)
+db_username = config.get_configuration_key("db.username")
+db_password = config.get_configuration_key("db.password")
 db_replica_set = config.get_configuration_key("db.replica_set_name")
 
-_mongodb_connection_string = f"mongodb://{db_username}:{db_password}@{db_host}:{db_port}/{db_name}"
+_mongodb_connection_string_credentials = f"{db_username}:{db_password}@" if db_username and db_password else ""
+
+_mongodb_connection_string = f"mongodb://{_mongodb_connection_string_credentials}{db_host}:{db_port}/{db_name}"
 
 if db_replica_set:
     _mongodb_connection_string += f"?replicaSet={db_replica_set}"
